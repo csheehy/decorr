@@ -2,7 +2,6 @@
 import numpy as np
 from astropy.constants import h, k_B, c
 from astropy import units as u
-from IPython.core.debugger import Tracer; debug_here=Tracer()
 
 def planck(f,T):
     """Return intensity for planck blackbody function. If f or T do
