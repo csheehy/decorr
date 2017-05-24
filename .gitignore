@@ -1,3 +1,6 @@
 *.pyc
 *~
 #*#
+maps
+spec
+tempmaps
