@@ -9,35 +9,53 @@ class loaddata(object):
 
     def __init__(self):
         # Load data
+
         self.cqu = {}
         self.cmc = {}
-        self.cpy = {}
+        self.cd0 = {}
+        self.cd2 = {}
+
         self.cqulin = {}
         self.cmclin = {}
-        self.cpylin = {}
+        self.cquall = {}
+        self.cmcall = {}
 
         self.cmcf = {}
-        self.cpyf = {}
+        self.cd0f = {}
+        self.cd2f = {}
+
+        self.cmcfall = {}
+
+        LR = decorr.getLR()
 
         for k,val in enumerate(LR):
+
+            print(val)
+
             dir = 'spec/gaussian'
-            pydir = 'spec/dust0_tophat'
+            d0dir = 'spec/dust0_tophat'
+            d2dir = 'spec/dust2_tophat'
 
             fnqu = '{0}/synch_therm_{1}_qucov_noise_xxxx.pickle'.format(dir,val)
             fnmc = '{0}/synch_therm_{1}_mc_noise_xxxx.pickle'.format(dir,val)
-            fnpy = '{0}/synch_therm_{1}_mc_noise_xxxx.pickle'.format(pydir,val)
+            fnd0 = '{0}/synch_therm_{1}_mc_noise_xxxx.pickle'.format(d0dir,val)
+            fnd2 = '{0}/synch_therm_{1}_mc_noise_xxxx.pickle'.format(d2dir,val)
 
             self.cqu[val] = decorr.Calc(fnqu, bintype='planck', full=False)
             self.cmc[val] = decorr.Calc(fnmc, bintype='planck', full=False)
-            self.cpy[val] = decorr.Calc(fnpy, bintype='planck', full=False)
+            self.cd0[val] = decorr.Calc(fnd0, bintype='planck', full=False)
+            self.cd2[val] = decorr.Calc(fnd2, bintype='planck', full=False)
 
             self.cqulin[val] = decorr.Calc(fnqu, bintype='lin', full=False, lmin=50, lmax=700)
             self.cmclin[val] = decorr.Calc(fnmc, bintype='lin', full=False, lmin=50, lmax=700)
-            self.cpylin[val] = decorr.Calc(fnpy, bintype='lin', full=False, lmin=50, lmax=700)
+            self.cquall[val] = decorr.Calc(fnqu, bintype='lin', full=False, lmin=50, lmax=700, nbin=1)
+            self.cmcall[val] = decorr.Calc(fnmc, bintype='lin', full=False, lmin=50, lmax=700, nbin=1)
 
             self.cmcf[val] = decorr.Calc(fnmc, bintype='planck', full=True)
-            self.cpyf[val] = decorr.Calc(fnpy, bintype='planck', full=True)
+            self.cd0f[val] = decorr.Calc(fnd0, bintype='planck', full=True)
+            self.cd2f[val] = decorr.Calc(fnd2, bintype='planck', full=True)
         
+            self.cmcfall[val] = decorr.Calc(fnmc, bintype='lin', full=True, lmin=50, lmax=700, nbin=1)
 
 
 class paper_plots(object):
@@ -50,7 +68,7 @@ class paper_plots(object):
     def plotspec(self, LR):
 
         cqu = self.c.cqu[LR]
-        cmc = self.c.cpy[LR]
+        cmc = self.c.cmc[LR]
         cqulin = self.c.cqulin[LR]
         cmclin = self.c.cmclin[LR]
 
@@ -108,6 +126,7 @@ class paper_plots(object):
                 
         tight_layout()
 
+
     def plotnh(self):
 
         # Massage into proper form
@@ -144,7 +163,7 @@ class paper_plots(object):
         col = ['y','b']
         
         #################
-        close(2)
+        #close(2)
         figure(2, figsize=(7,5))
         clf()
         for jj in range(2):
@@ -215,8 +234,8 @@ class paper_plots(object):
         handles, labels = ax.get_legend_handles_labels()
 
         # Plot a few realizations
-        h1 = plot(nh, SNmc[:, 20:40], color='m', alpha=0.3, label='MC sims')
-        h2 = plot(nh, R, 'Dr', markersize=8.0, markeredgewidth=1.0, label='real')
+        h1 = plot(nh, SNmc[:, 0:10], color='m', alpha=0.3)
+        h2 = plot(nh, R, 'Dr', markersize=8.0, markeredgewidth=1.0)
         plot([0,7],[1,1],'k:')
         xlabel(r'$N_H/10^{20} [cm^{-2}]$')
         ylabel(r'$\mathcal{R}_{50-160}^{BB}$')
@@ -225,7 +244,7 @@ class paper_plots(object):
 
         handles.append(h1[0])
         handles.append(h2[0])
-        labels.append(u'MC sims')
+        labels.append(u'QUcov sims')
         labels.append(u'real')
         
         legend(handles, labels, loc='upper right')
@@ -255,8 +274,8 @@ class paper_plots(object):
         print('chi PTE (QU) = {0}'.format(PTEchiqu))
         print('chi PTE (MC) = {0}'.format(PTEchimc))
 
-        
-        close(3)
+
+        #close(3)
         figure(3, figsize=(7,5))
         clf()
 
