@@ -14,6 +14,8 @@ import random
 from copy import deepcopy as dc
 from astropy.io import fits
 
+
+
 arcmin2rad = np.pi/180/60
 udefval=-1.6375e+30
 
@@ -61,6 +63,8 @@ def randstring(size=4):
     chars = string.ascii_uppercase + string.digits
     return ''.join(random.choice(chars) for _ in range(size))
 
+def getLR():
+    return ['LR16', 'LR24', 'LR33', 'LR42', 'LR53', 'LR63N', 'LR63S', 'LR63', 'LR72']
 
 ###################
 ###################
@@ -191,7 +195,7 @@ class Maps(object):
             
             # Already ran this and saved to disk
             #maps = self.genqucov()
-            fn = self.get_map_filenames('qucov_noise')
+            fn = self.get_map_filenames('qucov_noise', rlz=rlz)
             maps = self.loadmaps(fn)
             self.n = maps
 
@@ -520,7 +524,6 @@ class Spec(object):
         crossDfn = '{0}/crossD_{1}.fits'.format(tempdir, rands)
         crossffn = '{0}/crossf_{1}.fits'.format(tempdir, rands)
 
-        tol = 1e-6
         lmax = 700
 
         self.callispice(mapfn[2], mapfn[4], maskfn, auto1fn, fsky, lmax)
@@ -555,7 +558,7 @@ class Spec(object):
         return auto1, auto2, cross, crossf
 
 
-    def callispice(self, map1, map2, mask, clout, fsky, lmax):
+    def callispice(self, map1, map2, mask, clout, fsky, lmax, tol=1e-6):
         """Call PolSpice, wants filenames"""
 
         # apodizesigma and thetamax are supposed to scale with fsky (from
@@ -563,9 +566,9 @@ class Spec(object):
         th = round(np.interp(fsky, [0.01,0.5], [20,180]))
         th = np.min([th,180])
         ispice(map1, clout, mapfile2=map2, weightfile1=mask, weightfile2=mask,
-               polarization='YES', decouple='YES', tolerance=1e-6, 
+               polarization='YES', decouple='YES', tolerance=tol, 
                subav='YES', subdipole='YES', apodizesigma=th, thetamax=th,
-               nlmax=lmax)
+               nlmax=lmax, apodizetype=1)
         return
                                     
 
