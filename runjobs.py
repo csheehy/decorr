@@ -13,7 +13,7 @@ parser.add_option("-r", dest="rlz", type="int", default=0)
 parser.add_option("-p", dest="simprefix", type="str", default='gaussian_')
 parser.add_option("-s", dest="sigtype", type="str", default='gaussian')
 parser.add_option("-n", dest="noitype", type="str", default='qucov_noise')
-parser.add_option("-l", dest="reg", type="str", default='LR63')
+parser.add_option("-l", dest="reg", type="str", default='LR24')
 
 (o, args) = parser.parse_args()
 
