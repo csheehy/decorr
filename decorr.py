@@ -562,7 +562,8 @@ class Spec(object):
         """Call PolSpice, wants filenames"""
 
         # apodizesigma and thetamax are supposed to scale with fsky (from
-        # PolSpice documentation)
+        # PolSpice documentation). Turns out that apodizetype=1 is absolutley
+        # critical. 
         th = round(np.interp(fsky, [0.01,0.5], [20,180]))
         th = np.min([th,180])
         ispice(map1, clout, mapfile2=map2, weightfile1=mask, weightfile2=mask,
