@@ -9,7 +9,7 @@ parser.add_option("-r", dest="rlz", type="int", default=0)
 
 m = decorr.Maps()
 m.prepmaps('qucov_noise')
-fn = m.get_map_filenames('noise', rlz=o.rlz)
+fn = m.get_map_filenames('mc_noise', rlz=o.rlz)
 for k,val in enumerate(fn):
     fnout = val.replace('mc','qucov')
 
