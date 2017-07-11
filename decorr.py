@@ -600,7 +600,7 @@ class Spec(object):
         crossDfn = '{0}/crossD_{1}.fits'.format(tempdir, rands)
         crossffn = '{0}/crossf_{1}.fits'.format(tempdir, rands)
 
-        lmax = 700
+        lmax = 720
 
         self.callispice(mapfn[2], mapfn[4], maskfn, auto1fn, fsky, lmax)
         self.callispice(mapfn[3], mapfn[5], maskfn, auto2fn, fsky, lmax)
@@ -702,12 +702,8 @@ class Spec(object):
         # Tolerance must be lower for small fsky, too
         if fsky >= 0.5:
             tol = 1e-6
-        if (fsky >= 0.4) & (fsky<0.5):
-            tol = 1e-8
-        if (fsky>=0.3) & (fsky<0.4):
-            tol = 5e-9
-        if fsky <0.3:
-            tol = 2e-9
+        if fsky<0.5:
+            tol = 5e-8
 
         th = round(np.interp(fsky, [0.01,0.5], [20,180]))
         th = np.min([th,180])
