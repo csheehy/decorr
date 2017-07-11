@@ -6,14 +6,14 @@ import numpy as np
 import cPickle as cP
 from optparse import OptionParser
 
-
 parser = OptionParser()
 
 parser.add_option("-r", dest="rlz", type="int", default=0)
 parser.add_option("-p", dest="simprefix", type="str", default='gaussian_')
 parser.add_option("-s", dest="sigtype", type="str", default='gaussian')
-parser.add_option("-n", dest="noitype", type="str", default='qucov_noise')
-parser.add_option("-l", dest="reg", type="str", default='LR24')
+parser.add_option("-n", dest="noitype", type="str", default='mcplusexcess_noise')
+parser.add_option("-l", dest="reg", type="str", default='LR53')
+parser.add_option("-e", dest="est", type="str", default='pspice')
 
 (o, args) = parser.parse_args()
 
@@ -31,13 +31,13 @@ m.prepmasks('all')
 # Now start getting spectra
 s=Spec(m)
 if o.rlz == 0:
-    s.getspec('r')
+    s.getspec('r', estimator=o.est)
 delattr(m, 'r')
 
 m.prepmaps(o.sigtype)
-s.getspec('n')
-s.getspec('s')
-s.getspec(['s','n'])
+s.getspec('n', estimator=o.est)
+s.getspec('s', estimator=o.est)
+s.getspec(['s','n'], estimator=o.est)
 
 # Now delete real for memory 
 delattr(s,'maps')
@@ -49,7 +49,12 @@ if not os.path.exists(path):
 
 fn_prefix = string.join([val+'_' for k,val in enumerate(m.comp)], sep='')
 fn_prefix = fn_prefix + str(m.reg)
-fn = '{:s}_{:s}_{:04d}.pickle'.format(fn_prefix, o.noitype, o.rlz)
+if o.est == 'pspice':
+    estsuffix = ''
+else:
+    estsuffix = o.est+'_'
+
+fn = '{:s}_{:s}_{:s}{:04d}.pickle'.format(fn_prefix, o.noitype, estsuffix, o.rlz)
 
 del m
 

@@ -1,101 +1,49 @@
 import farmit
 import numpy as np
+import decorr
 
-f16=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'qucov_noise', 'l':'LR16'}, reqs={'N':1})
-f24=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'qucov_noise', 'l':'LR24'}, reqs={'N':1})
-f33=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'qucov_noise', 'l':'LR33'}, reqs={'N':1})
-f42=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'qucov_noise', 'l':'LR42'}, reqs={'N':1})
-f53=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'qucov_noise', 'l':'LR53'}, reqs={'N':1})
-f63=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'qucov_noise', 'l':'LR63'}, reqs={'N':1})
-f63N=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'qucov_noise', 'l':'LR63N'}, reqs={'N':1})
-f63S=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'qucov_noise', 'l':'LR63S'}, reqs={'N':1})
-f72=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'qucov_noise', 'l':'LR72'}, reqs={'N':1})
+LR = decorr.getLR()
+rlz = np.arange(100)
+est = 'pspice'
 
-f16.writejobfiles()
-f24.writejobfiles()
-f33.writejobfiles()
-f42.writejobfiles()
-f53.writejobfiles()
-f63.writejobfiles()
-f63N.writejobfiles()
-f63S.writejobfiles()
-f72.writejobfiles()
+sig = 'gaussian'
+noi = 'qucov_noise'
+pre = 'gaussian_'
+for k,val in enumerate(LR):
+    f = farmit.farmit('runjobs.py',args={'r':rlz, 'p':pre, 's':sig, 'n':noi, 'l':val, 'e':est}, reqs={'N':1})
+    f.writejobfiles()
 
-f16.runjobs()
-f24.runjobs()
-f33.runjobs()
-f42.runjobs()
-f53.runjobs()
-f63.runjobs()
-f63N.runjobs()
-f63S.runjobs()
-f72.runjobs()
+sig = 'gaussian'
+noi = 'mcplusexcess_noise'
+pre = 'gaussian_'
+for k,val in enumerate(LR):
+    f = farmit.farmit('runjobs.py',args={'r':rlz, 'p':pre, 's':sig, 'n':noi, 'l':val, 'e':est}, reqs={'N':1})
+    f.writejobfiles()
 
+if True:
+    sig = 'pysm'
+    noi = 'mcplusexcess_noise'
+    pre = 'dust0_tophat_'
+    for k,val in enumerate(LR):
+        f = farmit.farmit('runjobs.py',args={'r':rlz, 'p':pre, 's':sig, 'n':noi, 'l':val, 'e':est}, reqs={'N':1})
+        f.writejobfiles()
 
-f16=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'mc_noise', 'l':'LR16'}, reqs={'N':1})
-f24=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'mc_noise', 'l':'LR24'}, reqs={'N':1})
-f33=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'mc_noise', 'l':'LR33'}, reqs={'N':1})
-f42=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'mc_noise', 'l':'LR42'}, reqs={'N':1})
-f53=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'mc_noise', 'l':'LR53'}, reqs={'N':1})
-f63=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'mc_noise', 'l':'LR63'}, reqs={'N':1})
-f63N=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'mc_noise', 'l':'LR63N'}, reqs={'N':1})
-f63S=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'mc_noise', 'l':'LR63S'}, reqs={'N':1})
-f72=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'gaussian_', 's':'gaussian', 'n':'mc_noise', 'l':'LR72'}, reqs={'N':1})
+    sig = 'pysm'
+    noi = 'mcplusexcess_noise'
+    pre = 'dust1_tophat_'
+    for k,val in enumerate(LR):
+        f = farmit.farmit('runjobs.py',args={'r':rlz, 'p':pre, 's':sig, 'n':noi, 'l':val, 'e':est}, reqs={'N':1})
+        f.writejobfiles()
 
-f16.writejobfiles()
-f24.writejobfiles()
-f33.writejobfiles()
-f42.writejobfiles()
-f53.writejobfiles()
-f63.writejobfiles()
-f63N.writejobfiles()
-f63S.writejobfiles()
-f72.writejobfiles()
+    sig = 'pysm'
+    noi = 'mcplusexcess_noise'
+    pre = 'dust2_tophat_'
+    for k,val in enumerate(LR):
+        f = farmit.farmit('runjobs.py',args={'r':rlz, 'p':pre, 's':sig, 'n':noi, 'l':val, 'e':est}, reqs={'N':1})
+        f.writejobfiles()
 
-f16.runjobs()
-f24.runjobs()
-f33.runjobs()
-f42.runjobs()
-f53.runjobs()
-f63.runjobs()
-f63N.runjobs()
-f63S.runjobs()
-f72.runjobs()
+    f = farmit.farmit(f.jobfilepath+'*.job', resubmit=True)
 
-f16=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'dust2_tophat_', 's':'pysm', 'n':'mc_noise', 'l':'LR16'}, reqs={'N':1})
-f24=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'dust2_tophat_', 's':'pysm', 'n':'mc_noise', 'l':'LR24'}, reqs={'N':1})
-f33=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'dust2_tophat_', 's':'pysm', 'n':'mc_noise', 'l':'LR33'}, reqs={'N':1})
-f42=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'dust2_tophat_', 's':'pysm', 'n':'mc_noise', 'l':'LR42'}, reqs={'N':1})
-f53=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'dust2_tophat_', 's':'pysm', 'n':'mc_noise', 'l':'LR53'}, reqs={'N':1})
-f63=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'dust2_tophat_', 's':'pysm', 'n':'mc_noise', 'l':'LR63'}, reqs={'N':1})
-f63N=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'dust2_tophat_', 's':'pysm', 'n':'mc_noise', 'l':'LR63N'}, reqs={'N':1})
-f63S=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'dust2_tophat_', 's':'pysm', 'n':'mc_noise', 'l':'LR63S'}, reqs={'N':1})
-f72=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'dust2_tophat_', 's':'pysm', 'n':'mc_noise', 'l':'LR72'}, reqs={'N':1})
-
-f16.writejobfiles()
-f24.writejobfiles()
-f33.writejobfiles()
-f42.writejobfiles()
-f53.writejobfiles()
-f63.writejobfiles()
-f63N.writejobfiles()
-f63S.writejobfiles()
-f72.writejobfiles()
-
-f16.runjobs()
-f24.runjobs()
-f33.runjobs()
-f42.runjobs()
-f53.runjobs()
-f63.runjobs()
-f63N.runjobs()
-f63S.runjobs()
-f72.runjobs()
+f.runjobs(maxjobs=500)
 
 
-f63N=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'dust0_tophat_', 's':'pysm', 'n':'mc_noise', 'l':'LR63N'}, reqs={'N':1})
-f63S=farmit.farmit('runjobs.py',args={'r':np.arange(100), 'p':'dust0_tophat_', 's':'pysm', 'n':'mc_noise', 'l':'LR63S'}, reqs={'N':1})
-f63N.writejobfiles()
-f63S.writejobfiles()
-f63N.runjobs()
-f63S.runjobs()

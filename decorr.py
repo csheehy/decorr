@@ -6,6 +6,7 @@ import planck
 import cPickle as cP
 import sys
 sys.path.append('/astro/u/csheehy/python/PolSpice_v03-03-02/src')
+sys.path.append('/astro/u/csheehy/python/Xpol')
 from ispice import ispice
 import matplotlib.pyplot as plt
 from glob import glob
@@ -13,11 +14,18 @@ import string
 import random
 from copy import deepcopy as dc
 from astropy.io import fits
-
+import scipy.special as sp
+from scipy.stats import skew
+from scipy.optimize import curve_fit
+import scipy as sc
+import xpol_wrap as xpol
 
 
 arcmin2rad = np.pi/180/60
 udefval=-1.6375e+30
+
+def nanhist(x, **kwargs):
+    plt.hist(x[np.isfinite(x)],**kwargs)
 
 def concatenate_spec(f):
     """Load in and concatenate spectra files
@@ -33,23 +41,26 @@ def concatenate_spec(f):
 
         if k==0:
             s = s0
-            s.s = [s.s]
-            s.n = [s.n]
-            s.sn = [s.sn]
-            #s.BnoE = [s.BnoE]
-            #s.EnoB = [s.EnoB]
+            if hasattr(s,'s'):
+                s.s = [s.s]
+            if hasattr(s,'n'):
+                s.n = [s.n]
+            if hasattr(s,'sn'):
+                s.sn = [s.sn]
         else:
-            s.s.append(s0.s)
-            s.n.append(s0.n)
-            s.sn.append(s0.sn)
-            #s.BnoE.append(s0.BnoE)
-            #s.EnoB.append(s0.EnoB)
+            if hasattr(s,'s'):
+                s.s.append(s0.s)
+            if hasattr(s,'n'):
+                s.n.append(s0.n)
+            if hasattr(s,'sn'):
+                s.sn.append(s0.sn)
 
-    s.s = np.array(s.s)
-    s.n = np.array(s.n)
-    s.sn = np.array(s.sn)
-    #s.BnoE = np.array(s.BnoE)
-    #s.EnoB = np.array(s.EnoB)
+    if hasattr(s,'s'):
+        s.s = np.array(s.s)
+    if hasattr(s,'n'):
+        s.n = np.array(s.n)
+    if hasattr(s,'sn'):
+        s.sn = np.array(s.sn)
 
     fout = d[0][0:-11] + 'xxxx.pickle'
 
@@ -65,6 +76,9 @@ def randstring(size=4):
 
 def getLR():
     return ['LR16', 'LR24', 'LR33', 'LR42', 'LR53', 'LR63N', 'LR63S', 'LR63', 'LR72']
+
+def getfinite(x):
+    return(x[np.isfinite(x)])
 
 ###################
 ###################
@@ -134,6 +148,9 @@ class Maps(object):
             maps[4] = maps[4] + map217
             maps[5] = maps[5] + map353
 
+            maps = np.array(maps)
+            maps = self.applypixwin(maps)
+
             self.s = maps
 
         if type == 'gaussian':
@@ -161,7 +178,10 @@ class Maps(object):
             maps.append(map217)
             maps.append(map353)
 
-            self.s = np.array(maps)
+            maps = np.array(maps)
+            maps = self.applypixwin(maps)
+
+            self.s = maps
         
         if type == 'db':
             """Constructing debiasing maps from sims"""
@@ -193,11 +213,24 @@ class Maps(object):
         if type == 'qucov_noise':
             # Downgrade inside function
             
-            # Already ran this and saved to disk
+            # Generate the maps
             #maps = self.genqucov()
+
+            # If already saved on disk, do this
             fn = self.get_map_filenames('qucov_noise', rlz=rlz)
             maps = self.loadmaps(fn)
+
+            # Never comment this oiut
             self.n = maps
+
+        if type == 'qucovplusexcess_noise':
+            print('loading noise maps...')
+            fn = self.get_map_filenames('qucov_noise', rlz=rlz)
+            maps1 = self.loadmaps(fn)
+            fn = self.get_map_filenames('excess_noise', rlz=rlz)
+            maps2 = self.loadmaps(fn)
+
+            self.n = maps1 + maps2
 
         if type in ['mc_noise','all']:
             print('loading noise maps...')
@@ -205,6 +238,17 @@ class Maps(object):
             maps = self.loadmaps(fn)            
             maps = self.downgrade(maps)
             self.n = maps
+            self.rlz = rlz
+
+        if type == 'mcplusexcess_noise':
+            print('loading noise maps...')
+            fn = self.get_map_filenames('mc_noise', rlz=rlz)
+            maps1 = self.loadmaps(fn)            
+            maps1 = self.downgrade(maps1)
+            fn = self.get_map_filenames('excess_noise', rlz=rlz)
+            maps2 = self.loadmaps(fn)
+
+            self.n = maps1 + maps2
             self.rlz = rlz
 
         if type in ['sn','all']:
@@ -280,9 +324,22 @@ class Maps(object):
         # these nan
         maps_out[maps_out == udefval] = np.nan
 
-
         return maps_out
 
+
+    def applypixwin(self, maps):
+        """Apply the pixel window function to a set of maps"""
+
+        pw = hp.sphtfunc.pixwin(self.nside)
+
+        for k,val in enumerate(maps):
+            alm = np.array(hp.map2alm(val))
+            for j,val in enumerate(alm):
+                alm[j] = hp.almxfl(alm[j], pw)
+            alm = (alm[0], alm[1], alm[2])
+            maps[k] = hp.alm2map(alm, self.nside)
+
+        return maps
 
     def get_map_filenames(self, maptype, rlz=1):
         """Get map filenames, maptype = 'real', 'pysm', or 'noise' """
@@ -316,6 +373,15 @@ class Maps(object):
             fn.append(basedir + '217/ffp8_noise_217_hm2_map_mc_512dg_{:05d}.fits'.format(rlz))
             fn.append(basedir + '353/ffp8_noise_353_hm2_map_mc_512dg_{:05d}.fits'.format(rlz))
 
+        if maptype == 'excess_noise':
+            basedir = 'maps/excess_noise/'
+            fn.append(basedir + 'hm1_217_{:04d}.fits'.format(rlz))
+            fn.append(basedir + 'hm2_353_{:04d}.fits'.format(rlz))
+            fn.append(basedir + 'hm1_217_{:04d}.fits'.format(rlz))
+            fn.append(basedir + 'hm1_353_{:04d}.fits'.format(rlz))
+            fn.append(basedir + 'hm2_217_{:04d}.fits'.format(rlz))
+            fn.append(basedir + 'hm2_353_{:04d}.fits'.format(rlz))
+
         if maptype == 'qucov_noise':
             basedir = 'maps/qucov_noise/'
             fn.append(basedir + '217/ffp8_noise_217_full_map_qucov_512dg_{:05d}.fits'.format(rlz))
@@ -336,7 +402,7 @@ class Maps(object):
 
         maps = []
         # Load covariance maps
-        for k,val in enumerate(fn):
+        for k,val in enumerate([fn[2]]):
             # Ordering is TT, QQ, QU, UU
             fn0 = val.replace('512dg','2048')
             covmap = hp.read_map(fn0, field=(4,7,8,9))
@@ -344,6 +410,7 @@ class Maps(object):
             # Generate random numbers 
             npix = covmap[0].size
             Q = np.random.randn(npix)
+            U = np.random.randn(npix)
 
             # Generate correlated random numbers
             r = covmap[2]/np.sqrt(covmap[1]*covmap[3])
@@ -456,26 +523,35 @@ class Spec(object):
         self.fsky = maps.fsky
 
 
-    def getspec(self, field, append=False):
-        """If append=True, add a new realization to existing"""
+    def getspec(self, field, append=False, estimator='pspice'):
+        """If append=True, add a new realization to existing
+        estimator = 'pspice', 'xpol'
+        """
         
         print('getting spec {0}'.format(field))
 
         # Get mask
         self.mask = self.maps.getmask()
 
-        if type(field) is not list:
-            s0 = np.array(self.getautocross_pspice(getattr(self.maps,field), self.mask))
-        else:
-            s0 = np.array(self.getautocross_pspice(getattr(self.maps,field[0]) +
-                                                   getattr(self.maps,field[1]),
-                                                   self.mask))
+        if estimator == 'pspice':
+            if type(field) is not list:
+                s0 = np.array(self.getautocross_pspice(getattr(self.maps,field), self.mask))
+            else:
+                s0 = np.array(self.getautocross_pspice(getattr(self.maps,field[0]) +
+                                                       getattr(self.maps,field[1]),
+                                                       self.mask))
+        if estimator == 'xpol':
+            if type(field) is not list:
+                s0 = np.array(self.getautocross_xpol(getattr(self.maps,field), self.mask))
+            else:
+                s0 = np.array(self.getautocross_xpol(getattr(self.maps,field[0]) +
+                                                     getattr(self.maps,field[1]),
+                                                     self.mask))
 
         # Append or not
         if not append or not hasattr(self, field):
             field = string.replace(string.join(field),' ','')
             setattr(self, field, s0)
-            self.l = np.arange(s0[0][0].size)
         else:
             x = getattr(self, field)
             if type(x) is not list:
@@ -555,15 +631,84 @@ class Spec(object):
         for k,val in enumerate(mapfn):
             os.remove(val)
 
+        # Set ell, return spectra. This is dumb.
+        self.l = np.arange(auto1.shape[1])
+
         return auto1, auto2, cross, crossf
 
 
-    def callispice(self, map1, map2, mask, clout, fsky, lmax, tol=1e-6):
+    def getautocross_xpol(self, maps, mask):
+        """Calculate auto and cross of maps*mask:
+           auto1  = maps[2] x maps[4]
+           auto2  = maps[3] x maps[5]
+           cross  = (maps[2] x maps[3] + maps[2] x maps[5] + maps[4] x maps[3] + maps[4] x maps[5])/4
+           crossf = maps[0] x maps[1]
+           """
+        
+        # Zero maps where mask=0 to avoid possible NaNs in the masked region.
+        x = np.ones(maps.shape)*mask
+        maps[x==0]=0
+
+        # Write necessary files
+        rands = randstring(6)
+        tempdir = 'tempmaps'
+        if not os.path.exists(tempdir):
+            os.mkdir(tempdir)
+
+        # Write mask
+        maskfn = '{0}/mask_{1}.fits'.format(tempdir,rands)
+        hp.write_map(maskfn, mask)
+        fsky = np.nanmean(mask)
+
+        # Write maps
+        mapfn = []
+        for k,val in enumerate(maps):
+            mapfn.append('{0}/map_{1}_{2}.fits'.format(tempdir,k,rands))
+            hp.write_map(mapfn[k], val)
+
+        lmax = 700
+        be = np.arange(0, lmax+1, 10)
+
+        l, auto1, dum = xpol.getXcorr(512, mapfn[2], mapfn[4], maskfn, be)
+        l, auto2, dum = xpol.getXcorr(512, mapfn[3], mapfn[5], maskfn, be)
+        l, crossA, dum = xpol.getXcorr(512, mapfn[2], mapfn[3], maskfn, be)
+        l, crossB, dum = xpol.getXcorr(512, mapfn[2], mapfn[5], maskfn, be)
+        l, crossC, dum = xpol.getXcorr(512, mapfn[4], mapfn[3], maskfn, be)
+        l, crossD, dum = xpol.getXcorr(512, mapfn[4], mapfn[5], maskfn, be)
+        l, crossf, dum = xpol.getXcorr(512, mapfn[0], mapfn[1], maskfn, be)
+
+        cross = (crossA + crossB + crossC + crossD)/4.0
+
+        os.remove(maskfn)
+        for k,val in enumerate(mapfn):
+            os.remove(val)
+
+        # Set l, return spectra. This is dumb.
+        self.l = l
+
+        # Return C_l
+        fac = 2*np.pi/(l*(l+1))
+
+        return fac*auto1, fac*auto2, fac*cross, fac*crossf
+
+
+    def callispice(self, map1, map2, mask, clout, fsky, lmax):
         """Call PolSpice, wants filenames"""
 
         # apodizesigma and thetamax are supposed to scale with fsky (from
         # PolSpice documentation). Turns out that apodizetype=1 is absolutley
-        # critical. 
+        # critical.
+        
+        # Tolerance must be lower for small fsky, too
+        if fsky >= 0.5:
+            tol = 1e-6
+        if (fsky >= 0.4) & (fsky<0.5):
+            tol = 1e-8
+        if (fsky>=0.3) & (fsky<0.4):
+            tol = 5e-9
+        if fsky <0.3:
+            tol = 2e-9
+
         th = round(np.interp(fsky, [0.01,0.5], [20,180]))
         th = np.min([th,180])
         ispice(map1, clout, mapfile2=map2, weightfile1=mask, weightfile2=mask,
@@ -640,18 +785,16 @@ class Calc(object):
     """Calculate decorrelation parameter for input Spec object"""
 
     def __init__(self, spec, bintype='planck', lmin=10, lmax=1000, nbin=100,
-                 full=False, dodebias=False, binwhat='spec'):
+                 full=False, dodebias=False, binwhat='spec', Rtype='R',doall=True):
 
         if type(spec) is str:
             # It's a pickle file, load it
             f = open(spec,'rb')
             self.spec = cP.load(f)
             f.close()
-            doall = True
         else:
             # It's already loaded
             self.spec = dc(spec)
-            doall = False
         
         self.bintype = bintype
         self.binwhat = binwhat
@@ -660,6 +803,7 @@ class Calc(object):
         self.lmax = lmax
         self.full = full
         self.dodebias = dodebias
+        self.Rtype = Rtype
 
         if doall:
             self.doall()
@@ -673,7 +817,6 @@ class Calc(object):
         if self.dodebias:
             self.debias()
         self.getR()
-        self.getPTE()
 
         # Mean of s,n, and sn over realizations
         self.Smean = np.nanmean(self.S, 0)
@@ -689,6 +832,13 @@ class Calc(object):
         # Error is median absolute deviation
         self.err = np.nanmedian(np.abs(self.SN - self.SNmedian), axis=0)
 
+        self.nrlz = self.SN.shape[0]
+        if self.nrlz > 1:
+            self.getPTE()
+            #self.getmode()
+
+        self.getRdist()
+        self.getRlike()
 
     def addspecdim(self):
         """Add a dimension to s, n, and sn if only 1 realization"""
@@ -710,8 +860,9 @@ class Calc(object):
 
         if self.binwhat == 'spec':
             if type in ['r','all']:
-                self.r = self.binspec(self.spec.r)
-                self.R = self.calcR(self.r)
+                if hasattr(self.spec,'r'):
+                    self.r = self.binspec(self.spec.r)
+                    self.R = self.calcR(self.r)
             if type in ['s','all']:
                 self.s = np.array([self.binspec(self.spec.s[k]) for k in range(len(self.spec.s))])
                 self.S = np.array([self.calcR(self.s[k]) for k in range(len(self.s))])
@@ -740,16 +891,15 @@ class Calc(object):
 
 
     def debias(self):
-        """Debias E->B and B->E mixing from real, sims, and s+n"""
+        """Debias noise bias from spectra"""
 
         # Average over realizations
         self.spec.db = np.zeros(self.spec.r.shape)
-        self.spec.db[:,1,:] = self.spec.BnoE.mean(0)[:,1,:]
-        self.spec.db[:,2,:] = self.spec.EnoB.mean(0)[:,2,:]
+        self.spec.db[:,1,:] = self.spec.n.mean(0)[:,1,:]
+        self.spec.db[:,2,:] = self.spec.n.mean(0)[:,2,:]
 
         self.spec.r = self.spec.r - self.spec.db
         for k in range(self.spec.s.shape[0]):
-            self.spec.s[k] = self.spec.s[k] - self.spec.db
             self.spec.sn[k] = self.spec.sn[k] - self.spec.db
 
 
@@ -758,6 +908,10 @@ class Calc(object):
         if self.bintype == 'planck':
             self.be = np.array([50,160,320,500,700])
             self.nbin = 4
+
+        if self.bintype == 'bk':
+            self.be = np.array([20,55,90,125,160,195,230,265,300,335])
+            self.nbin = 9
 
         if self.bintype == 'log':
             self.be = np.logspace(np.log10(self.lmin), np.log10(self.lmax), self.nbin+1)
@@ -776,6 +930,7 @@ class Calc(object):
         l = self.spec.l
         be = self.be
         sz = spec.shape
+        fac = l*(l+1)/(2*np.pi)
 
         if self.binwhat == 'spec':
             # Bin spectra
@@ -783,14 +938,14 @@ class Calc(object):
             for k in range(0,sz[0]):
                 for j in range(0,sz[1]):
                     for m in range(0,self.bc.size):
-                        specbin[k][j][m] = np.mean(spec[k][j][(l>=be[m]) & (l<be[m+1])])
+                        specbin[k][j][m] = np.mean( (fac*spec[k][j])[(l>=be[m]) & (l<be[m+1])] )
 
         elif self.binwhat == 'R':
             # Bin R
             specbin = np.zeros((sz[0],self.bc.size))
             for k in range(0,sz[0]):
                 for m in range(0,self.bc.size):
-                    specbin[k][m] = np.nanmean(spec[k][(l>=be[m]) & (l<be[m+1])])
+                    specbin[k][m] = np.nanmean( (fac*spec[k])[(l>=be[m]) & (l<be[m+1])] )
 
         return specbin
 
@@ -809,56 +964,215 @@ class Calc(object):
             crossind = 2
 
         for k in range(3):
-            R[k] = specbin[crossind][k]/np.sqrt(specbin[0][k]*specbin[1][k])
+            if self.Rtype == 'R':
+                R[k] = specbin[crossind][k]/np.sqrt(specbin[0][k]*specbin[1][k])
+            if self.Rtype == 'Rsquared':
+                R[k] = specbin[crossind][k]**2/(specbin[0][k]*specbin[1][k])
         return R
 
 
     def getPTE(self):
         """Get PTE values from sims"""
+        # Bin by bin
         sz = self.R.shape
-        self.nrlz = self.SN.shape[0]
         self.PTE = np.zeros(sz)
+        self.PTEall = np.zeros(sz[0])
         for k in range(sz[0]):
             for j in range(sz[1]):
                 ngood = np.where(np.isfinite(self.SN[:,k,j]))[0].size
-                self.PTE[k,j] = np.size(np.where(self.SN[:,k,j] < self.R[k,j])[0])*1.0/ngood
+                if ngood>0:
+                    self.PTE[k,j] = np.size(np.where(self.SN[:,k,j] < self.R[k,j])[0])*1.0/ngood
+                else:
+                    self.PTE[k,j] = np.nan
         self.PTE[~np.isfinite(self.R)] = np.nan
 
-    def plotR(self):
-        """Make plots"""
+        # Combined PTE
+        # Impose R nanmask on SN
+        SN = self.SN
+        R = self.R
+        nanmask = np.ones(R.shape)
+        nanmask[~np.isfinite(R)]=np.nan
+        SN = SN*nanmask
+
+        doind = (self.bc >=50) & (self.bc<=700)
+        Rcomb = np.nanmean((R/self.err)[:,doind]**2, 1)
+        SNcomb = np.nanmean((SN/self.err)[:,:,doind]**2, 2)
+        for k in range(sz[0]):
+            ngood = np.where(np.isfinite(SNcomb[:,k]))[0].size
+            self.PTEall[k] = np.size( np.where(SNcomb[:,k] < Rcomb[k])[0] )*1.0/ngood
 
 
-        # Plot raw R with realizations
-        l = self.bc
-        
-        plt.figure(1);
-        plt.clf();
-        spec = ['T', 'E', 'B']
 
-        mod = Model(fsky=self.spec.fsky, l=np.arange(self.be[0],self.be[-1]))
+    def getmode(self):
+        """Calculate most likely value of R distribution."""
+
+        # First fit all the SN R distributions
+        self.fitRdist()
+
+        # Look for max of distribution over these values
+        x = np.linspace(0,2,10000)
+        sz = self.SN.shape
+
+        self.mode = np.zeros((sz[1],sz[2]))
 
         for k in [1,2]:
-            plt.subplot(1,2,k)
-            ax=plt.plot(l, self.SN[:,k,:].T, '.-', color='gray',zorder=-32)
-            #plt.plot(l, self.SNmean[k], 'k', label='mean of sn sims', linewidth=2)
-            plt.plot(l, self.SNmedian[k], 'k', label='median of sn sims', linewidth=2)
-            plt.plot(l, self.Smean[k], 'r', label='mean of s sims', linewidth=2)
-            #plt.plot(l, self.Nmean[k], 'c', label='mean of n sims', linewidth=2)
+            for j in range(sz[2]):
+                # Get skew normal dist
+                f = self.skewnorm(x, *self.p[:,k,j])
+                mx = np.nanmax(f)
+                try:
+                    self.mode[k,j] = x[np.where(f==mx)]
+                except:
+                    self.mode[k,j] = np.nan
 
-            if k==1:
-                plt.plot(mod.l, mod.RE, 'k--', label='model')
-            else:
-                plt.plot(mod.l, mod.RB, 'k--', label='model')
 
-            plt.errorbar(l, self.R[k], self.err[k], fmt='o', label='real', linewidth=2)
-            plt.xlim(self.be[0],self.be[-1])
-            if k==1:
-                plt.ylim(0.3,1.1)
-            else:
-                plt.ylim(0.7,1.2)
-            plt.grid('on')
-            plt.title(spec[k])
-            plt.legend()
+    def fitRdist(self):
+        """Fit a skewnorm distribution to the SN ratios and get parameters"""
+        nparams = 4
+        sz = np.array(self.SN.shape)
+        sz[0] = nparams
+
+        self.p = np.zeros(sz)
+
+        for k in [1,2]: # Only do E/B
+            for j in range(sz[2]):
+                self.p[:, k, j] = self.getskewnorm(self.SN[:,k,j])
+
+
+    def getskewnorm(self, x, nbin=10):
+        """Histogram and fit offset to collection of x"""
+
+        # Get hist
+        x = getfinite(x)
+
+        # Get range
+        mn = np.max([-5, np.min(x)])
+        mx = np.min([20, np.max(x)])
+
+        n, be = np.histogram(x, bins=nbin, range=(mn,mx))
+        bc = (be[0:-1] + be[1:])/2
+        
+        # Initial guesses
+        sigma0 = x.std()
+        mu0 = x.mean()
+        alpha0 = skew(x)
+        a0 = np.max(n)
+
+        p0 = np.array([sigma0, mu0, alpha0, a0])
+
+        try:
+            p, pcov = curve_fit(self.skewnorm, bc, n, p0=p0)
+        except:
+            p = p0; p[:] = np.nan
+
+        return p
+
+
+    def skewnorm(self, x, sigmag, mu, alpha, a):
+        """Skew normal distribution"""
+        normpdf = np.exp(-(x-mu)**2 / (2*sigmag**2))
+        normcdf = 1+sp.erf((alpha*((x-mu)/sigmag))/(np.sqrt(2)))
+        return a*normpdf*normcdf
+
+    def getRdist(self):
+        """Get max likelihood distribution for R centered on observed value"""
+        mu = np.nanmean(self.s,0)
+
+        R = self.R
+
+        self.up68 = np.zeros(R.shape)
+        self.up95 = np.zeros(R.shape)
+        self.down68 = np.zeros(R.shape)
+        self.down95 = np.zeros(R.shape)
+
+        if self.full:
+            crossind = 3
+        else:
+            crossind = 2
+
+        mod = Model(fsky=self.spec.fsky, be=self.be)
+        
+        for k in [1,2]:
+            for j in range(R.shape[1]):
+
+                auto1 = self.sn[:,0,k,j]
+                auto2 = self.sn[:,1,k,j]
+                cross = self.sn[:,crossind,k,j]
+
+                # Shift cross down
+                if k==1:
+                    Rmod = mod.RE[j]
+                else:
+                    Rmod = mod.RB[j]
+                Rnew = R[k,j]
+                dR = (Rmod - Rnew)
+                dc = dR*np.sqrt(mu[0,k,j]*mu[1,k,j])
+
+                x = (self.sn[:,3,k,j]-dc) / np.sqrt(self.sn[:,0,k,j]*self.sn[:,1,k,j])
+
+                x = x[np.isfinite(x)]
+                if len(x) > 20:
+                    self.up68[k,j] = np.percentile(x, 50 + 68./2)
+                    self.up95[k,j] = np.percentile(x, 50 + 95./2)
+                    self.down68[k,j] = np.percentile(x, 50 - 68./2)
+                    self.down95[k,j] = np.percentile(x, 50 - 95./2)
+                else:
+                    self.up68[k,j] = np.nan
+                    self.up95[k,j] = np.nan
+                    self.down68[k,j] = np.nan
+                    self.down95[k,j] = np.nan
+
+
+    
+    def getRlike(self):
+        """Get likelihood of observed value for different trial "true" R
+        values, computed as fraction of shifted sim distributions that have 
+        Rsim > Robs"""
+        
+        mu = np.nanmean(self.s,0)
+
+        R = self.R
+        sz = R.shape
+
+        self.Rtrial = np.hstack( (np.linspace(0,.89,90),np.linspace(0.9,1,41)) )
+        ntrial = self.Rtrial.size
+
+        self.Rlike = np.zeros((ntrial,sz[0],sz[1]))
+
+        if self.full:
+            crossind = 3
+        else:
+            crossind = 2
+
+        mod = Model(fsky=self.spec.fsky, be=self.be)
+        
+        for k in [1,2]:
+            for j in range(R.shape[1]):
+
+                auto1 = self.sn[:,0,k,j]
+                auto2 = self.sn[:,1,k,j]
+                cross = self.sn[:,crossind,k,j]
+
+                # Shift cross down
+                if k==1:
+                    Rmod = mod.RE[j]
+                else:
+                    Rmod = mod.RB[j]
+
+                for l,val in enumerate(self.Rtrial):
+                    Rnew = val
+                    dR = (Rmod - Rnew)
+                    dc = dR*np.sqrt(mu[0,k,j]*mu[1,k,j])
+
+                    x = (self.sn[:,3,k,j]-dc) / np.sqrt(self.sn[:,0,k,j]*self.sn[:,1,k,j])
+
+                    x = x[np.isfinite(x)]
+                    ngood = len(x)
+                    if ngood > 20:
+                        self.Rlike[l,k,j] = (np.where(x > R[k,j])[0]).size*1.0 / ngood
+                    else:
+                        self.Rlike[l,k,j] = np.nan
+
 
 
 ###################
@@ -866,19 +1180,24 @@ class Calc(object):
 
 class Model(object):
 
-    def __init__(self, fsky=0.7, l=None):
+    def __init__(self, fsky=0.7, l=None, be=None):
         """Model of R for given fsky"""
         if l is None:
             l = np.arange(1000)
 
         self.l = l
         self.fsky = fsky
+        self.be = be
 
-        RB,ll = self.getR(self.fsky, spec=2)
-        RE,ll = self.getR(self.fsky, spec=1)
+        RB,ll = self.getR(spec=2)
+        RE,ll = self.getR(spec=1)
 
-        self.RB = np.interp(self.l, ll, RB)
-        self.RE = np.interp(self.l, ll, RE)
+        if self.be is None:
+            self.RB = np.interp(self.l, ll, RB)
+            self.RE = np.interp(self.l, ll, RE)
+        else:
+            self.RB = RB
+            self.RE = RE
 
 
     def genlcdmmap(self, fwhm=4.818, nside=512, lensingB=True):
@@ -951,11 +1270,18 @@ class Model(object):
         return cl,nm
 
 
-    def getR(self, fsky, spec=2):
+    def getR(self, fsky=None, spec=2, be=None):
         """fsky = sky fraction
            spec = 0,1,2 for T,E,B. TT does not currently work because the dust power
-                  law needs to be defined. BICEP field corresponds to fsky=.135"""
+                  law needs to be defined. BICEP field corresponds to fsky=.135
+           be = bin edges, if not None
+        """
+        
+        if fsky is None:
+            fsky = self.fsky
 
+        if be is None:
+            be = self.be
 
         # Load lensing C_l in uK_cmb^2
         cl_l,nm = self.readcambfits('camb_planck2013_r0_lensing.fits');
@@ -965,7 +1291,27 @@ class Model(object):
         # Get dust spectrum C_l in uK_cmb^2 at 353 and 217 GHz at fsky=0.5
         d_353 = self.getdustcl(l,353,fsky,spec)
         d_217 = self.getdustcl(l,217,fsky,spec)
+        
+        if be is not None:
+            sz = be.size-1
+            fac = l*(l+1)/(2*np.pi)
+            cl_l = cl_l*fac
+            d_353 = d_353*fac
+            d_217 = d_217*fac
+            cl_l_bin = np.zeros(sz)
+            d_353_bin = np.zeros(sz)
+            d_217_bin = np.zeros(sz)
 
+            for k in range(sz):
+                ind = (l>=be[k]) & (l<be[k+1])
+                cl_l_bin[k] = np.mean(cl_l[ind])
+                d_353_bin[k] = np.mean(d_353[ind])
+                d_217_bin[k] = np.mean(d_217[ind])
+
+            cl_l = cl_l_bin
+            d_353 = d_353_bin
+            d_217 = d_217_bin
+            
         # Compute R = <353 x 217> / sqrt(<353x353><217x217>)
         R = (np.sqrt(d_353)*np.sqrt(d_217) + cl_l) / np.sqrt((d_353 + cl_l)*(d_217+cl_l))
 
@@ -1027,15 +1373,22 @@ class Model(object):
         return cl
 
 
-    def freq_scale(self, f, ffid=353.0, beta=1.59, Tdust=19.6):
+    def freq_scale(self, f, ffid=353.0, beta=1.59, Tdust=19.6, nside=512, dbeta=None):
         """Conversion factor to scale dust map at frequency ffid (GHz) to f
         (GHz)."""
 
         # Make sure this works if f is an integer
         f = np.float(f)
 
+        if dbeta is not None:
+            npix = hp.nside2npix(nside)
+            betarand = np.random.randn(npix)*dbeta
+            betamap = betarand + beta
+        else:
+            betamap = beta
+
         # Conversion factor for graybody
-        fac = planck.planck(f*1e9,Tdust)/planck.planck(ffid*1e9,Tdust) * (f/ffid)**beta
+        fac = planck.planck(f*1e9,Tdust)/planck.planck(ffid*1e9,Tdust) * (f/ffid)**betamap
         fac = fac.value
 
         # Conversion factor for thermodynamic temperature

@@ -4,6 +4,11 @@ import random
 import numpy as np
 from glob import glob
 from datetime import datetime
+import ntpath
+import time
+import subprocess
+
+
 
 class farmit(object):
 
@@ -16,6 +21,7 @@ class farmit(object):
 
         Values of argument dictonary must be arrays, even if only length 1
         """
+        self.jobfilepath = os.getenv('HOME')+'/jobfiles/'
 
         if resubmit:
             #First arg is wildcard to existing job files. Just use these and do
@@ -25,7 +31,12 @@ class farmit(object):
 
         self.script = script
         self.args = args
-        self.reqs = reqs
+
+        # Always forward X
+        self.reqs = {'X':1}
+        if reqs is not None:
+            for k,val in enumerate(reqs):
+                self.reqs[val]=reqs[val]
 
         if jobname is None:
             self.jobname = self.datestr()+'_'+self.randstring()
@@ -34,7 +45,6 @@ class farmit(object):
         
         self.prepargs()
 
-        self.jobfilepath = os.getenv('HOME')+'/jobfiles/'
         self.getjobfilenames()
         self.runpath = os.getcwd()
 
@@ -121,10 +131,55 @@ class farmit(object):
     def reqstring(self, req):
         return '{0}: {1}\n'.format(req, self.reqs[req])
 
-    def runjobs(self):
+    def runjobs(self, maxjobs=500):
         """Submit jobs"""
-        for k,val in enumerate(self.jobfilenames):
-            cmd = 'wq sub -b'
-            cmd += ' '
-            cmd += val
-            os.system(cmd)
+
+        if maxjobs is None:
+            # Submit all jobs
+            for k,val in enumerate(self.jobfilenames):
+                self.submitjob(val)
+        else:
+            # Only submit a few at a time since wq cannot handle too many
+            # submitted jobs, even if they are not running
+            i = 0
+            ntotal = len(self.jobfilenames)
+            while True:
+                njobs = self.getnjobs()
+                nsubmit = maxjobs - njobs
+                for k in range(nsubmit):
+                    if i<ntotal:
+                        self.submitjob(self.jobfilenames[i])
+                        print('submitting job {0} of {1}'.format(i+1, ntotal))
+                        i += 1
+                    else:
+                        return
+                time.sleep(5)
+
+    def submitjob(self, fn):
+        """Submit a single job file"""
+        cmd = 'wq sub -b {:s}'.format(fn)
+        os.system(cmd)
+    
+    def waituntildone(self):
+        """Wait until the jobs are done"""
+        jfn = np.array(self.jobfilenames)
+        for k,val in enumerate(jfn):
+            jfn[k] = ntpath.basename(val)
+
+        while True:
+            ls = np.array(glob(self.jobfilepath+'*.job'))
+            for k,val in enumerate(ls):
+                ls[k] = ntpath.basename(val)
+            njobs = len(np.intersect1d(jfn, ls))
+            if njobs==0:
+                break
+            time.sleep(5)
+        return
+
+    def getnjobs(self):
+        """Get number of running jobs"""
+        res = subprocess.check_output('wq ls -u csheehy', shell=True)
+        ind1 = res.find('Jobs:')
+        ind2 = res.find('Running:')
+        njobs = int(res[(ind1+5):ind2])
+        return njobs
