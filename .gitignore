@@ -4,3 +4,6 @@
 maps
 spec
 tempmaps
+*.fits
+*.png
+figures
