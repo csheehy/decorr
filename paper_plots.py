@@ -320,7 +320,7 @@ class paper_plots(object):
         ############################
         ############################
         # Get some statistics
-        err = np.array(up68) - np.array(down68)
+        err = (np.array(up68) - np.array(down68))/2
 
         chiRmc = np.sum((Rmc-1)/err)
         chi2Rmc = np.sum(((Rmc-1)/err)**2)
