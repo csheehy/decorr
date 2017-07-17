@@ -62,7 +62,7 @@ cl353mcmean = cl353mc.mean(0)
 
 
 # Bin Cl (not l^2 cl)
-be = np.arange(0,800,20)
+be = np.arange(0,800,5)
 bc = (be[0:-1] + be[1:])/2.
 l = np.arange(cl217r.shape[1])
 nbin = be.size-1

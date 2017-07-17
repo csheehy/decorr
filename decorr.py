@@ -48,18 +48,18 @@ def concatenate_spec(f):
             if hasattr(s,'sn'):
                 s.sn = [s.sn]
         else:
-            if hasattr(s,'s'):
+            if hasattr(s0,'s'):
                 s.s.append(s0.s)
-            if hasattr(s,'n'):
+            if hasattr(s0,'n'):
                 s.n.append(s0.n)
-            if hasattr(s,'sn'):
+            if hasattr(s0,'sn'):
                 s.sn.append(s0.sn)
 
-    if hasattr(s,'s'):
+    if hasattr(s0,'s'):
         s.s = np.array(s.s)
-    if hasattr(s,'n'):
+    if hasattr(s0,'n'):
         s.n = np.array(s.n)
-    if hasattr(s,'sn'):
+    if hasattr(s0,'sn'):
         s.sn = np.array(s.sn)
 
     fout = d[0][0:-11] + 'xxxx.pickle'
@@ -210,17 +210,20 @@ class Maps(object):
             maps = self.downgrade(maps)
             self.r = maps
 
-        if type == 'qucov_noise':
-            # Downgrade inside function
-            
-            # Generate the maps
-            #maps = self.genqucov()
-
-            # If already saved on disk, do this
-            fn = self.get_map_filenames('qucov_noise', rlz=rlz)
+        if type in ['realds','all']:
+            print('loading real maps...')
+            fn = self.get_map_filenames('realds')
             maps = self.loadmaps(fn)
+            maps = self.downgrade(maps)
+            self.r = maps
 
-            # Never comment this oiut
+        if 'qucov' in type:
+            fn = self.get_map_filenames(type.replace('plusexcess',''), rlz=rlz)
+            maps = self.loadmaps(fn)
+            if 'plusexcess' in type:
+                fn = self.get_map_filenames('excess_noise', rlz=rlz)
+                maps2 = self.loadmaps(fn)
+                maps = maps + maps2
             self.n = maps
 
         if type == 'qucovplusexcess_noise':
@@ -311,9 +314,6 @@ class Maps(object):
                 
                 maps_out[k] = hp.pixelfunc.ud_grade(val, self.nside, pess=False)
 
-                #val[val==udefval]=0; val[~np.isfinite(val)]=0
-                #alm = hp.map2alm(val, lmax=2*self.nside)
-                #maps_out[k] = np.array(hp.alm2map(alm, self.nside))
         else:
             maps_out = dc(maps)
 
@@ -354,6 +354,15 @@ class Maps(object):
             fn.append(basedir + 'HFI_SkyMap_353_512dg_R2.02_halfmission-1.fits')
             fn.append(basedir + 'HFI_SkyMap_217_512dg_R2.02_halfmission-2.fits')
             fn.append(basedir + 'HFI_SkyMap_353_512dg_R2.02_halfmission-2.fits')
+
+        if maptype == 'realds':
+            basedir = 'maps/real/'
+            fn.append(basedir + 'HFI_SkyMap_217_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_353_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_217-ds1_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_353-ds1_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_217-ds2_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_353-ds2_512dg_R2.02_full.fits')
             
         if maptype == 'pysm':
             basedir = '../PySM/'
@@ -391,18 +400,33 @@ class Maps(object):
             fn.append(basedir + '217/ffp8_noise_217_hm2_map_qucov_512dg_{:05d}.fits'.format(rlz))
             fn.append(basedir + '353/ffp8_noise_353_hm2_map_qucov_512dg_{:05d}.fits'.format(rlz))
 
+        if maptype == 'qucovds_noise':
+            basedir = 'maps/qucov_noise/'
+            fn.append(basedir + '217/ffp8_noise_217_full_map_qucov_512dg_{:05d}.fits'.format(rlz))
+            fn.append(basedir + '353/ffp8_noise_353_full_map_qucov_512dg_{:05d}.fits'.format(rlz))
+            fn.append(basedir + '217/ffp8_noise_217_ds1_map_qucov_512dg_{:05d}.fits'.format(rlz))
+            fn.append(basedir + '353/ffp8_noise_353_ds1_map_qucov_512dg_{:05d}.fits'.format(rlz))
+            fn.append(basedir + '217/ffp8_noise_217_ds2_map_qucov_512dg_{:05d}.fits'.format(rlz))
+            fn.append(basedir + '353/ffp8_noise_353_ds2_map_qucov_512dg_{:05d}.fits'.format(rlz))
+
+
         return fn
             
 
-    def genqucov(self):
+    def genqucov(self, ds=False):
         """Gen random noise realization from QU covariance maps"""
         
         # Get real map names
-        fn = self.get_map_filenames('real')
+        if ds:
+            fn = self.get_map_filenames('realds')
+        else:
+            fn = self.get_map_filenames('real')
+
+        fnmc = self.get_map_filenames('mc_noise', rlz=0)
 
         maps = []
         # Load covariance maps
-        for k,val in enumerate([fn[2]]):
+        for k,val in enumerate(fn):
             # Ordering is TT, QQ, QU, UU
             fn0 = val.replace('512dg','2048')
             covmap = hp.read_map(fn0, field=(4,7,8,9))
@@ -422,6 +446,15 @@ class Maps(object):
             
             # Generate uncorrelated T
             T = np.random.randn(npix)*np.sqrt(covmap[0])
+
+            # Apply hm mask
+            x = fnmc[k]
+            x = x.replace('_512dg_','_')
+            nm = hp.read_map(x,field=1)
+            nm = np.isfinite(nm)
+            T[~nm] = udefval
+            Q[~nm] = udefval
+            U[~nm] = udefval
 
             # Downgrade and append
             maps.append( self.downgrade(np.array([[T,Q,U]]) ))
@@ -812,6 +845,7 @@ class Calc(object):
         self.addspecdim()
         if self.dodebias:
             self.debias()
+        self.binspec()
         self.getR()
 
         # Mean of s,n, and sn over realizations
@@ -831,7 +865,6 @@ class Calc(object):
         self.nrlz = self.SN.shape[0]
         if self.nrlz > 1:
             self.getPTE()
-            #self.getmode()
 
         self.getRdist()
         self.getRlike()
@@ -844,45 +877,45 @@ class Calc(object):
             self.spec.n = self.spec.n.reshape((1,) + self.spec.n.shape)
         if self.spec.sn.ndim == 3:
             self.spec.sn = self.spec.sn.reshape((1,) + self.spec.sn.shape)
-        #if self.spec.BnoE.ndim == 3:
-        #    self.spec.BnoE = self.spec.BnoE.reshape((1,) + self.spec.BnoE.shape)
-        #if self.spec.EnoB.ndim == 3:
-        #    self.spec.EnoB = self.spec.EnoB.reshape((1,) + self.spec.EnoB.shape)
 
 
-    def getR(self, type='all'):
+
+    def binspec(self, type_in='all'):
         
         self.getbins()
 
-        if self.binwhat == 'spec':
-            if type in ['r','all']:
-                if hasattr(self.spec,'r'):
-                    self.r = self.binspec(self.spec.r)
-                    self.R = self.calcR(self.r)
-            if type in ['s','all']:
-                self.s = np.array([self.binspec(self.spec.s[k]) for k in range(len(self.spec.s))])
-                self.S = np.array([self.calcR(self.s[k]) for k in range(len(self.s))])
-            if type in ['n','all']:
-                self.n = np.array([self.binspec(self.spec.n[k]) for k in range(len(self.spec.n))])
-                self.N = np.array([self.calcR(self.n[k]) for k in range(len(self.n))])
-            if type in ['sn','all']:
-                self.sn = np.array([self.binspec(self.spec.sn[k]) for k in range(len(self.spec.sn))])
-                self.SN = np.array([self.calcR(self.sn[k]) for k in range(len(self.sn))])
-                
-        if self.binwhat == 'R':
-            if type in ['r','all']:
-                self.r = self.calcR(self.spec.r)
-                self.R = self.binspec(self.r)
-            if type in ['s','all']:
-                self.s = np.array([self.calcR(self.spec.s[k]) for k in range(len(self.spec.s))])                
-                self.S = np.array([self.binspec(self.s[k]) for k in range(len(self.s))])
-            if type in ['n','all']:
-                self.n = np.array([self.calcR(self.spec.n[k]) for k in range(len(self.spec.n))])                
-                self.N = np.array([self.binspec(self.n[k]) for k in range(len(self.n))])
-            if type in ['sn','all']:
-                self.sn = np.array([self.calcR(self.spec.sn[k]) for k in range(len(self.spec.sn))])                
-                self.SN = np.array([self.binspec(self.sn[k]) for k in range(len(self.sn))])
+        if type_in == 'all':
+            type = ['r','s','n','sn']
+        else:
+            type = [type_in]
 
+        for dum,val in enumerate(type):
+
+            if val=='r':
+                if hasattr(self.spec,'r'):
+                    self.r = self.binspec_sub(self.spec.r)
+            else:
+                x = getattr(self.spec,val)
+                setattr(self, val, np.array([self.binspec_sub(x[k]) for k in range(len(x))]) )
+
+        return
+
+    def getR(self, type_in='all'):
+
+        if type_in == 'all':
+            type = ['R','S','N','SN']
+        else:
+            type = [type_in]
+
+        for dum,val in enumerate(type):
+
+            if val=='R':
+                if hasattr(self.spec,'r'):
+                    self.R = self.calcR(self.r)
+            else:
+                x = getattr(self, val.lower())
+                setattr(self, val, np.array([self.calcR(x[k]) for k in range(len(x))]) )
+                
         return
 
 
@@ -891,12 +924,22 @@ class Calc(object):
 
         # Average over realizations
         self.spec.db = np.zeros(self.spec.r.shape)
-        self.spec.db[:,1,:] = self.spec.n.mean(0)[:,1,:]
-        self.spec.db[:,2,:] = self.spec.n.mean(0)[:,2,:]
+
+        if type(self.dodebias) is str:
+            # Load file
+            f = open(self.dodebias)
+            s = cP.load(f)
+            self.spec.db[:,1,:] = s.n.mean(0)[:,1,:]
+            self.spec.db[:,2,:] = s.n.mean(0)[:,2,:]
+        else:
+            self.spec.db[:,1,:] = self.spec.n.mean(0)[:,1,:]
+            self.spec.db[:,2,:] = self.spec.n.mean(0)[:,2,:]
 
         self.spec.r = self.spec.r - self.spec.db
-        for k in range(self.spec.s.shape[0]):
-            self.spec.sn[k] = self.spec.sn[k] - self.spec.db
+        
+        if type(self.dodebias) is not str:
+            for k in range(self.spec.s.shape[0]):
+                self.spec.sn[k] = self.spec.sn[k] - self.spec.db
 
 
     def getbins(self):
@@ -920,7 +963,7 @@ class Calc(object):
         return
 
 
-    def binspec(self, spec):
+    def binspec_sub(self, spec):
         """Bin spectra"""
 
         l = self.spec.l
@@ -991,8 +1034,8 @@ class Calc(object):
         SN = SN*nanmask
 
         doind = (self.bc >=50) & (self.bc<=700)
-        Rcomb = np.nanmean((R/self.err)[:,doind]**2, 1)
-        SNcomb = np.nanmean((SN/self.err)[:,:,doind]**2, 2)
+        Rcomb = np.nanmean((R/self.err**2)[:,doind]**2, 1)
+        SNcomb = np.nanmean((SN/self.err**2)[:,:,doind]**2, 2)
         for k in range(sz[0]):
             ngood = np.where(np.isfinite(SNcomb[:,k]))[0].size
             self.PTEall[k] = np.size( np.where(SNcomb[:,k] < Rcomb[k])[0] )*1.0/ngood
@@ -1095,7 +1138,7 @@ class Calc(object):
                 auto2 = self.sn[:,1,k,j]
                 cross = self.sn[:,crossind,k,j]
 
-                # Shift cross down
+                # Shift cross up or down
                 if k==1:
                     Rmod = mod.RE[j]
                 else:
@@ -1266,11 +1309,16 @@ class Model(object):
         return cl,nm
 
 
-    def getR(self, fsky=None, spec=2, be=None):
+    def getR(self, fsky=None, spec=2, be=None, Robs=None):
         """fsky = sky fraction
            spec = 0,1,2 for T,E,B. TT does not currently work because the dust power
                   law needs to be defined. BICEP field corresponds to fsky=.135
            be = bin edges, if not None
+           delta = dust only decorrelation param with no CMB, 1 by default for
+                   not decorrelation
+           Robs = if defined, will output the DUST ONLY decorrelation R for a
+                   given observed R, which includes CMB and dust. Robs must be
+                   size be-1
         """
         
         if fsky is None:
@@ -1308,10 +1356,20 @@ class Model(object):
             d_353 = d_353_bin
             d_217 = d_217_bin
             
-        # Compute R = <353 x 217> / sqrt(<353x353><217x217>)
-        R = (np.sqrt(d_353)*np.sqrt(d_217) + cl_l) / np.sqrt((d_353 + cl_l)*(d_217+cl_l))
+            l = (be[0:-1] + be[1:])/2.
 
-        return R, l
+        denom = np.sqrt((d_353 + cl_l)*(d_217+cl_l))
+        cross = np.sqrt(d_353)*np.sqrt(d_217)
+        cmb = cl_l
+
+
+        if Robs is None:
+            # Compute R = <353 x 217> / sqrt(<353x353><217x217>)
+            return (cross + cmb)/denom, l
+        else:
+            # R_dust
+            return (Robs*denom - cmb)/cross, l
+
 
 
     def readcambfits(self, fname):

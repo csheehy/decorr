@@ -9,7 +9,7 @@ if doload:
 
 # Real 217
 Tg = m.r[0,0,:]
-pix = np.arange(pix.size)
+pix = np.arange(Tg.size)
 
 # Coordinates of map
 theta,phi = hp.pix2ang(512,pix)

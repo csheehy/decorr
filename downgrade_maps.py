@@ -4,7 +4,7 @@ import os
 from optparse import OptionParser
 
 parser = OptionParser()
-parser.add_option("-f", dest="f", type="int", default=217)
+parser.add_option("-f", dest="f", type="int", default=353)
 parser.add_option("-r", dest="rlz", type="int", default=100)
 (o, args) = parser.parse_args()
 
@@ -22,7 +22,8 @@ def get_mc_fnames(f, rlz):
 
     return fn
 
-def get_real_fnames(f):
+def get_real_fnames(f, ds=False):
+
     dir = 'maps/real/'
     if f in [30, 44, 70]:
         pref = 'LFI'
@@ -31,15 +32,20 @@ def get_real_fnames(f):
         ver = 'R2.01'
     else:
         pref = 'HFI'
-        hm = ['full', 'halfmission-1', 'halfmission-2']
+        if ds:
+            hm = ['ds1', 'ds1', 'ds2']
+        else:
+            hm = ['full', 'halfmission-1', 'halfmission-2']
         nside = '2048'
         ver = 'R2.02'
-        
 
     fn = []
 
     for k,val in enumerate(hm):
-        fn.append(dir + '{:s}_SkyMap_{:03d}_{:s}_{:s}_{:s}.fits'.format(pref,f,nside,ver,val))
+        if ds:
+            fn.append(dir + '{:s}_SkyMap_{:03d}-{:s}_{:s}_{:s}_full.fits'.format(pref,f,val,nside,ver))
+        else:
+            fn.append(dir + '{:s}_SkyMap_{:03d}_{:s}_{:s}_{:s}.fits'.format(pref,f,nside,ver,val))
  
     return fn, nside
 
@@ -64,7 +70,7 @@ def dodg(fn_in, fn_out, nside=512, TQU=True, mask=None):
 
 
 # Downgrade real map
-fnr, nside = get_real_fnames(o.f) # real maps
+fnr, nside = get_real_fnames(o.f, ds=True) # real maps
 fns        = get_mc_fnames(o.f, 0) # Choose rlz0 of mc_noise to create NaN mask
 if o.f in [545, 857]:
     TQU = False
@@ -75,25 +81,26 @@ else:
 
 
 # Downgrade real maps
-#for j,fn_in in enumerate(fnr):
-#    print('downgrading {0}'.format(fn_in))
-#    fn_out = fn_in.replace(nside, '512dg')
-#    dodg(fn_in, fn_out, mask=fns[j], TQU=TQU)
+for j,fn_in in enumerate(fnr):
+    print('downgrading {0}'.format(fn_in))
+    fn_out = fn_in.replace(nside, '512dg')
+    dodg(fn_in, fn_out, mask=fns[j], TQU=TQU)
 
 
-rlz = o.rlz
-fnn = get_mc_fnames(o.f, rlz)
-for j,fn_in in enumerate(fnn):
-    fn_out = fn_in.replace('map_mc','map_mc_512dg')
-    # Skip if already exists
-    if not os.path.isfile(fn_out):
-        print('downgrading {0}'.format(fn_in))
-        if o.f in [545, 857]:
-            TQU = False
+if False:
+    rlz = o.rlz
+    fnn = get_mc_fnames(o.f, rlz)
+    for j,fn_in in enumerate(fnn):
+        fn_out = fn_in.replace('map_mc','map_mc_512dg')
+        # Skip if already exists
+        if not os.path.isfile(fn_out):
+            print('downgrading {0}'.format(fn_in))
+            if o.f in [545, 857]:
+                TQU = False
+            else:
+                TQU = True
+            # Downgrade
+            dodg(fn_in, fn_out, TQU=TQU)
         else:
-            TQU = True
-        # Downgrade
-        dodg(fn_in, fn_out, TQU=TQU)
-    else:
-        print('{0} already exists, skipping...'.format(fn_out))
+            print('{0} already exists, skipping...'.format(fn_out))
 
