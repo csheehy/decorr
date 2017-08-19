@@ -210,12 +210,48 @@ class Maps(object):
             maps = self.downgrade(maps)
             self.r = maps
 
-        if type in ['realds','all']:
+        if type in ['realds']:
             print('loading real maps...')
             fn = self.get_map_filenames('realds')
             maps = self.loadmaps(fn)
             maps = self.downgrade(maps)
             self.r = maps
+
+        if type in ['realhmds1', 'realhmds2', 'realhrds']:
+            print('loading real maps...')
+            fn = self.get_map_filenames(type)
+            maps = self.loadmaps(fn)
+            maps = self.downgrade(maps)
+            self.r = maps
+
+        if type in ['realhmdsavg']:
+            print('loading real maps...')
+            fn = self.get_map_filenames('realhmds1')
+            maps1 = self.loadmaps(fn)
+            maps1 = self.downgrade(maps1)
+            fn = self.get_map_filenames('realhmds2')
+            maps2 = self.loadmaps(fn)
+            maps2 = self.downgrade(maps2)
+
+            self.r = (maps1 + maps2)/2
+
+        if type in ['noihmds1','noihmds2']:
+            print('loading noise maps...')
+            fn = self.get_map_filenames(type, rlz=rlz)
+            maps = self.loadmaps(fn)
+            maps = self.downgrade(maps)
+            self.n = maps
+
+        if type in ['noihmdsavg']:
+            print('loading noise maps...')
+            fn = self.get_map_filenames('noihmds1', rlz=rlz)
+            maps1 = self.loadmaps(fn)
+            maps1 = self.downgrade(maps1)
+            fn = self.get_map_filenames('noihmds2', rlz=rlz)
+            maps2 = self.loadmaps(fn)
+            maps2 = self.downgrade(maps2)
+
+            self.n = (maps1 + maps2)/2
 
         if 'qucov' in type:
             fn = self.get_map_filenames(type.replace('plusexcess',''), rlz=rlz)
@@ -253,6 +289,34 @@ class Maps(object):
 
             self.n = maps1 + maps2
             self.rlz = rlz
+
+        if type == 'hm217':
+            print('loading intrafrequency hm split')
+            fn = self.get_map_filenames('hm217')
+            maps = self.loadmaps(fn)
+            maps = self.downgrade(maps)
+            self.hm217 = maps
+
+        if type == 'hm353':
+            print('loading intrafrequency hm split')
+            fn = self.get_map_filenames('hm353')
+            maps = self.loadmaps(fn)
+            maps = self.downgrade(maps)
+            self.hm353 = maps
+
+        if type == 'ds217':
+            print('loading intrafrequency ds split')
+            fn = self.get_map_filenames('ds217')
+            maps = self.loadmaps(fn)
+            maps = self.downgrade(maps)
+            self.ds217 = maps
+
+        if type == 'ds353':
+            print('loading intrafrequency hm split')
+            fn = self.get_map_filenames('ds353')
+            maps = self.loadmaps(fn)
+            maps = self.downgrade(maps)
+            self.ds353 = maps
 
         if type in ['sn','all']:
             print('adding s and n maps')
@@ -363,6 +427,53 @@ class Maps(object):
             fn.append(basedir + 'HFI_SkyMap_353-ds1_512dg_R2.02_full.fits')
             fn.append(basedir + 'HFI_SkyMap_217-ds2_512dg_R2.02_full.fits')
             fn.append(basedir + 'HFI_SkyMap_353-ds2_512dg_R2.02_full.fits')
+
+        if maptype == 'realhmds1':
+            basedir = 'maps/real/'
+            fn.append(basedir + 'HFI_SkyMap_217_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_353_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_217-ds2_512dg_R2.02_halfmission-1.fits')
+            fn.append(basedir + 'HFI_SkyMap_353-ds2_512dg_R2.02_halfmission-1.fits')
+            fn.append(basedir + 'HFI_SkyMap_217-ds1_512dg_R2.02_halfmission-2.fits')
+            fn.append(basedir + 'HFI_SkyMap_353-ds1_512dg_R2.02_halfmission-2.fits')
+
+        if maptype == 'realhmds2':
+            basedir = 'maps/real/'
+            fn.append(basedir + 'HFI_SkyMap_217_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_353_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_217-ds2_512dg_R2.02_halfmission-2.fits')
+            fn.append(basedir + 'HFI_SkyMap_353-ds2_512dg_R2.02_halfmission-2.fits')
+            fn.append(basedir + 'HFI_SkyMap_217-ds1_512dg_R2.02_halfmission-1.fits')
+            fn.append(basedir + 'HFI_SkyMap_353-ds1_512dg_R2.02_halfmission-1.fits')
+
+        if maptype == 'noihmds1':
+            basedir = 'maps/qucov_noise/'
+            fn.append(basedir + '217/ffp8_noise_217_full_map_qucov_512dg_{:05d}.fits'.format(rlz))
+            fn.append(basedir + '353/ffp8_noise_353_full_map_qucov_512dg_{:05d}.fits'.format(rlz))
+            basedir = 'maps/hmds/'
+            fn.append(basedir + 'HFI_SkyMap_217-ds2_512dg_R2.02_halfmission-1_noi{:05d}.fits'.format(rlz))
+            fn.append(basedir + 'HFI_SkyMap_353-ds2_512dg_R2.02_halfmission-1_noi{:05d}.fits'.format(rlz))
+            fn.append(basedir + 'HFI_SkyMap_217-ds1_512dg_R2.02_halfmission-2_noi{:05d}.fits'.format(rlz))
+            fn.append(basedir + 'HFI_SkyMap_353-ds1_512dg_R2.02_halfmission-2_noi{:05d}.fits'.format(rlz))
+
+        if maptype == 'noihmds2':
+            basedir = 'maps/qucov_noise/'
+            fn.append(basedir + '217/ffp8_noise_217_full_map_qucov_512dg_{:05d}.fits'.format(rlz))
+            fn.append(basedir + '353/ffp8_noise_353_full_map_qucov_512dg_{:05d}.fits'.format(rlz))
+            basedir = 'maps/hmds/'
+            fn.append(basedir + 'HFI_SkyMap_217-ds2_512dg_R2.02_halfmission-2_noi{:05d}.fits'.format(rlz))
+            fn.append(basedir + 'HFI_SkyMap_353-ds2_512dg_R2.02_halfmission-2_noi{:05d}.fits'.format(rlz))
+            fn.append(basedir + 'HFI_SkyMap_217-ds1_512dg_R2.02_halfmission-1_noi{:05d}.fits'.format(rlz))
+            fn.append(basedir + 'HFI_SkyMap_353-ds1_512dg_R2.02_halfmission-1_noi{:05d}.fits'.format(rlz))
+
+        if maptype == 'realhrds':
+            basedir = 'maps/real/'
+            fn.append(basedir + 'HFI_SkyMap_217_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_353_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_217-ds2_512dg_R2.02_full-ringhalf-1.fits')
+            fn.append(basedir + 'HFI_SkyMap_353-ds2_512dg_R2.02_full-ringhalf-1.fits')
+            fn.append(basedir + 'HFI_SkyMap_217-ds1_512dg_R2.02_full-ringhalf-2.fits')
+            fn.append(basedir + 'HFI_SkyMap_353-ds1_512dg_R2.02_full-ringhalf-2.fits')
             
         if maptype == 'pysm':
             basedir = '../PySM/'
@@ -409,19 +520,33 @@ class Maps(object):
             fn.append(basedir + '217/ffp8_noise_217_ds2_map_qucov_512dg_{:05d}.fits'.format(rlz))
             fn.append(basedir + '353/ffp8_noise_353_ds2_map_qucov_512dg_{:05d}.fits'.format(rlz))
 
+        if maptype == 'ds217':
+            basedir = 'maps/real/'
+            fn.append(basedir + 'HFI_SkyMap_217-ds1_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_217-ds2_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_217-ds1_512dg_R2.02_full-ringhalf-1.fits')
+            fn.append(basedir + 'HFI_SkyMap_217-ds2_512dg_R2.02_full-ringhalf-1.fits')
+            fn.append(basedir + 'HFI_SkyMap_217-ds1_512dg_R2.02_full-ringhalf-2.fits')
+            fn.append(basedir + 'HFI_SkyMap_217-ds2_512dg_R2.02_full-ringhalf-2.fits')
+
+        if maptype == 'ds353':
+            basedir = 'maps/real/'
+            fn.append(basedir + 'HFI_SkyMap_353-ds1_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_353-ds2_512dg_R2.02_full.fits')
+            fn.append(basedir + 'HFI_SkyMap_353-ds1_512dg_R2.02_full-ringhalf-1.fits')
+            fn.append(basedir + 'HFI_SkyMap_353-ds2_512dg_R2.02_full-ringhalf-1.fits')
+            fn.append(basedir + 'HFI_SkyMap_353-ds1_512dg_R2.02_full-ringhalf-2.fits')
+            fn.append(basedir + 'HFI_SkyMap_353-ds2_512dg_R2.02_full-ringhalf-2.fits')
+
 
         return fn
             
 
-    def genqucov(self, ds=False):
+    def genqucov(self, type='real'):
         """Gen random noise realization from QU covariance maps"""
         
         # Get real map names
-        if ds:
-            fn = self.get_map_filenames('realds')
-        else:
-            fn = self.get_map_filenames('real')
-
+        fn = self.get_map_filenames(type)
         fnmc = self.get_map_filenames('mc_noise', rlz=0)
 
         maps = []
@@ -580,6 +705,14 @@ class Spec(object):
                 s0 = np.array(self.getautocross_xpol(getattr(self.maps,field[0]) +
                                                      getattr(self.maps,field[1]),
                                                      self.mask))
+
+        if estimator == 'hp':
+            if type(field) is not list:
+                s0 = np.array(self.getautocross(getattr(self.maps,field), self.mask))
+            else:
+                s0 = np.array(self.getautocross(getattr(self.maps,field[0]) +
+                                                getattr(self.maps,field[1]),
+                                                self.mask))
 
         # Append or not
         if not append or not hasattr(self, field):
@@ -779,6 +912,8 @@ class Spec(object):
                         hp.alm2cl(alm[4][k],alm[5][k]))/4.0
             crossf[k] = hp.alm2cl(alm[0][k],alm[1][k])
 
+        self.l = np.arange(auto1[0].size)
+
         return fac*np.array(auto1), fac*np.array(auto2), fac*np.array(cross), fac*np.array(crossf)
         
 
@@ -890,12 +1025,11 @@ class Calc(object):
             type = [type_in]
 
         for dum,val in enumerate(type):
-
-            if val=='r':
-                if hasattr(self.spec,'r'):
-                    self.r = self.binspec_sub(self.spec.r)
+            x = getattr(self.spec,val)
+            if len(x.shape) == 3:
+                # Only 1 "realization" #
+                setattr(self, val, self.binspec_sub(x))
             else:
-                x = getattr(self.spec,val)
                 setattr(self, val, np.array([self.binspec_sub(x[k]) for k in range(len(x))]) )
 
         return
@@ -908,12 +1042,11 @@ class Calc(object):
             type = [type_in]
 
         for dum,val in enumerate(type):
-
-            if val=='R':
-                if hasattr(self.spec,'r'):
-                    self.R = self.calcR(self.r)
+            x = getattr(self, val.lower())
+            if len(x.shape) == 3:
+                # Only 1 "realization"
+                setattr(self, val, self.calcR(x))
             else:
-                x = getattr(self, val.lower())
                 setattr(self, val, np.array([self.calcR(x[k]) for k in range(len(x))]) )
                 
         return
@@ -1309,7 +1442,7 @@ class Model(object):
         return cl,nm
 
 
-    def getR(self, fsky=None, spec=2, be=None, Robs=None):
+    def getR(self, fsky=None, spec=2, be=None, Robs=None, syst=None):
         """fsky = sky fraction
            spec = 0,1,2 for T,E,B. TT does not currently work because the dust power
                   law needs to be defined. BICEP field corresponds to fsky=.135
@@ -1319,6 +1452,9 @@ class Model(object):
            Robs = if defined, will output the DUST ONLY decorrelation R for a
                    given observed R, which includes CMB and dust. Robs must be
                    size be-1
+           syst = 3 x N x l array of systematics c_l in uK^2 (not d_l) to be added to the
+                  217, 353, and cross spectra, respectively. First dim is 217,
+                  353, cross, second dim is TETetc., third dim is ell
         """
         
         if fsky is None:
@@ -1332,43 +1468,49 @@ class Model(object):
         cl_l = cl_l[:,spec] # TT, EE, orBB
         l = np.arange(cl_l.size)
 
-        # Get dust spectrum C_l in uK_cmb^2 at 353 and 217 GHz at fsky=0.5
-        d_353 = self.getdustcl(l,353,fsky,spec)
-        d_217 = self.getdustcl(l,217,fsky,spec)
-        
+        # Get dust spectrum D_l in uK_cmb^2 at 353 and 217 GHz
+        fac = l*(l+1)/(2*np.pi)
+        dl_353 = self.getdustcl(l,353,fsky,spec)*fac
+        dl_217 = self.getdustcl(l,217,fsky,spec)*fac    
+        dl_cmb = cl_l*fac
+
         if be is not None:
             sz = be.size-1
-            fac = l*(l+1)/(2*np.pi)
-            cl_l = cl_l*fac
-            d_353 = d_353*fac
-            d_217 = d_217*fac
-            cl_l_bin = np.zeros(sz)
-            d_353_bin = np.zeros(sz)
-            d_217_bin = np.zeros(sz)
+            dl_cmb_bin = np.zeros(sz)
+            dl_353_bin = np.zeros(sz)
+            dl_217_bin = np.zeros(sz)
 
             for k in range(sz):
                 ind = (l>=be[k]) & (l<be[k+1])
-                cl_l_bin[k] = np.mean(cl_l[ind])
-                d_353_bin[k] = np.mean(d_353[ind])
-                d_217_bin[k] = np.mean(d_217[ind])
+                dl_cmb_bin[k] = np.mean(dl_cmb[ind])
+                dl_353_bin[k] = np.mean(dl_353[ind])
+                dl_217_bin[k] = np.mean(dl_217[ind])
 
-            cl_l = cl_l_bin
-            d_353 = d_353_bin
-            d_217 = d_217_bin
+            dl_cmb = dl_cmb_bin
+            dl_353 = dl_353_bin
+            dl_217 = dl_217_bin
             
             l = (be[0:-1] + be[1:])/2.
 
-        denom = np.sqrt((d_353 + cl_l)*(d_217+cl_l))
-        cross = np.sqrt(d_353)*np.sqrt(d_217)
-        cmb = cl_l
+        z = np.zeros( (3, l.size) )
+        if syst is not None:
+            # Expand systematics to size of spectra
+            lmax = syst[0,0,:].size-1
+            # Cl -> Dl
+            ll = np.arange(lmax+1)
+            fac = ll*(ll+1)/(2*np.pi)
+            for j in range(z.shape[0]):
+                z[j,0:(lmax+1)] = np.interp(l[0:(lmax+1)], ll, syst[j,spec,:]*fac)
 
+        denom = np.sqrt((dl_353 + dl_cmb + z[1])*(dl_217 + dl_cmb + z[0]))
+        cross = np.sqrt(dl_353)*np.sqrt(dl_217) + z[2]
 
         if Robs is None:
             # Compute R = <353 x 217> / sqrt(<353x353><217x217>)
-            return (cross + cmb)/denom, l
+            return (cross + dl_cmb)/denom, l
         else:
             # R_dust
-            return (Robs*denom - cmb)/cross, l
+            return (Robs*denom - dl_cmb)/cross, l
 
 
 

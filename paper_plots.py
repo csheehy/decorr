@@ -47,17 +47,6 @@ class loaddata(object):
             self.cmclin[val] = decorr.Calc(fnmc, bintype='lin', full=True, lmin=0, lmax=700, nbin=70, dodebias=fndb)
             self.cmcbk[val] = decorr.Calc(fnmc, bintype='bk', full=True, dodebias=fndb)
 
-            #fnqu = '{0}/synch_therm_{1}_qucovds_noise_xxxx.pickle'.format(dir,val)
-            #fnmc = '{0}/synch_therm_{1}_mcplusexcess_noise_xxxx.pickle'.format(dir,val)
-
-            #self.cqu[val] = decorr.Calc(fnqu, bintype='planck', full=False, dodebias=False)
-            #self.cmc[val] = decorr.Calc(fnqu, bintype='planck', full=False, dodebias=fnmc)
-            #self.cmc2[val] = decorr.Calc(fnqu, bintype='planck', full=False, dodebias=True)
-            #self.cmc2f[val] = decorr.Calc(fnqu, bintype='planck', full=False, dodebias=fnmc)
-
-            #self.cmclin[val] = decorr.Calc(fnqu, bintype='lin', full=False, lmin=0, lmax=700, nbin=70, dodebias=fnmc)
-            #self.cmcbk[val] = decorr.Calc(fnqu, bintype='bk', full=False, dodebias=True)
-
 
 class paper_plots(object):
     

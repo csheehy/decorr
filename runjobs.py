@@ -8,7 +8,8 @@ from optparse import OptionParser
 
 parser = OptionParser()
 
-parser.add_option("-r", dest="rlz", type="int", default=0)
+parser.add_option("-z", dest="rlz", type="int", default=0)
+parser.add_option("-r", dest="rtype", type="str", default='real')
 parser.add_option("-p", dest="simprefix", type="str", default='gaussian_')
 parser.add_option("-s", dest="sigtype", type="str", default='gaussian')
 parser.add_option("-n", dest="noitype", type="str", default='qucov_noise')
@@ -22,10 +23,7 @@ comp = ['synch','therm']
 m=Maps(nside=512, comp=comp, simprefix=o.simprefix, reg=o.reg);
 
 # First get real and noise, needed for NaNmask
-if 'ds' in o.noitype:
-    m.prepmaps('realds')
-else:
-    m.prepmaps('real')
+m.prepmaps(o.rtype)
 m.prepmaps(o.noitype, rlz=o.rlz)
 
 # Now get masks
