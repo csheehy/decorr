@@ -17,14 +17,37 @@ class loaddata(object):
     def __init__(self):
         # Load data
 
-        self.cqu = {}
-        self.cmc = {}
-        self.cmc2 = {}
-        self.cmc2f = {}
+        self.cqu   = {}
+        self.cmc   = {}
+        self.cquds = {}
+        self.cmcds = {}
 
-        self.cmclin = {}
+        self.cmcnoi = {}
 
-        self.cmcbk = {}
+        self.cmclin   = {}
+        self.cmclinds = {}
+
+
+        self.cmcbk   = {}
+        self.cqubk   = {}
+        self.cmcbkds = {}
+        self.cqubkds = {}
+
+        self.cd0 = {}
+        self.cd1 = {}
+        self.cd2 = {}
+        
+        self.cd0pl = {}
+        self.cd0bk = {}
+
+        self.chmds1 = {}
+        self.chmds2 = {}
+
+        self.chmds1bk = {}
+        self.chmds2bk = {}
+
+        self.chmds1dl3 = {}
+        self.chmds2dl3 = {}
 
         LR = decorr.getLR()
 
@@ -33,19 +56,52 @@ class loaddata(object):
             print(val)
 
             dir = 'spec/gaussian'
-
-            fnqu = '{0}/synch_therm_{1}_qucov_noise_xpol_xxxx.pickle'.format(dir,val)
-            fnmc = '{0}/synch_therm_{1}_mcplusexcess_noise_xpol_xxxx.pickle'.format(dir,val)
-            fndb = '{0}/synch_therm_LR72_mcplusexcess_noise_xpol_xxxx.pickle'.format(dir)
-
-            self.cqu[val] = decorr.Calc(fnqu, bintype='planck', full=False, dodebias=False)
-            self.cmc[val] = decorr.Calc(fnqu, bintype='planck', full=False, dodebias=fndb)
-            self.cmc2[val] = decorr.Calc(fnmc, bintype='planck', full=False, dodebias=fndb)
-            self.cmc2f[val] = decorr.Calc(fnmc, bintype='planck', full=True, dodebias=fndb)
+            dird0 = 'spec/dust0_tophat'
+            dird1 = 'spec/dust1_tophat'
+            dird2 = 'spec/dust2_tophat'
 
 
-            self.cmclin[val] = decorr.Calc(fnmc, bintype='lin', full=True, lmin=0, lmax=700, nbin=70, dodebias=fndb)
-            self.cmcbk[val] = decorr.Calc(fnmc, bintype='bk', full=True, dodebias=fndb)
+            fnqu   = '{0}/synch_therm_{1}_qucov_noise_xpol_xxxx.npz'.format(dir,val)
+            fnquds = '{0}/synch_therm_{1}_qucovds_noise_xpol_xxxx.npz'.format(dir,val)
+
+            fnmc   = '{0}/synch_therm_{1}_mcplusexcess_noise_xpol_xxxx.npz'.format(dir,val)
+            fndb   = '{0}/synch_therm_{1}_mcplusexcess_noise_xpol_xxxx.npz'.format(dir,val)
+
+            fnd0   = '{0}/synch_therm_{1}_mcplusexcess_noise_xxxx.pickle'.format(dird0,val)
+            fnd1   = '{0}/synch_therm_{1}_mcplusexcess_noise_xxxx.pickle'.format(dird1,val)
+            fnd2   = '{0}/synch_therm_{1}_mcplusexcess_noise_xxxx.pickle'.format(dird2,val)
+
+            fnhmds1 = 'spec/dust0_tophat/synch_therm_{:s}_noihmds1_xxxx.pickle'.format(val)
+            fnhmds2 = 'spec/dust0_tophat/synch_therm_{:s}_noihmds2_xxxx.pickle'.format(val)
+
+            self.cqu[val]    = decorr.Calc(fnqu,   bintype='planck', dodebias=False)
+            self.cmc[val]    = decorr.Calc(fnqu,   bintype='planck', dodebias=fndb)
+            self.cquds[val]  = decorr.Calc(fnquds, bintype='planck', dodebias=False)
+            self.cmcds[val]  = decorr.Calc(fnquds, bintype='planck', dodebias=fndb)
+
+            self.cmcnoi[val] = decorr.Calc(fnmc, bintype='lin', lmin=0, lmax=700, nbin=70, dodebias=False)
+
+            self.cmclin[val]   = decorr.Calc(fnqu,   bintype='lin', lmin=0, lmax=700, nbin=70, dodebias=fndb)
+            self.cmclinds[val] = decorr.Calc(fnquds, bintype='lin', lmin=0, lmax=700, nbin=70, dodebias=fndb)
+
+            self.cqubk[val]   = decorr.Calc(fnqu,   bintype='bk', dodebias=False)
+            self.cmcbk[val]   = decorr.Calc(fnqu,   bintype='bk', dodebias=fndb)
+            self.cqubkds[val] = decorr.Calc(fnquds, bintype='bk', dodebias=False)
+            self.cmcbkds[val] = decorr.Calc(fnquds, bintype='bk', dodebias=fndb)
+
+            self.cd0[val] = decorr.Calc(fnd0, bintype='lin', lmin=0, lmax=700, nbin=70, dodebias=False)
+            self.cd1[val] = decorr.Calc(fnd1, bintype='lin', lmin=0, lmax=700, nbin=70, dodebias=False)
+            self.cd2[val] = decorr.Calc(fnd2, bintype='lin', lmin=0, lmax=700, nbin=70, dodebias=False)
+
+            self.cd0pl[val] = decorr.Calc(fnd0, bintype='planck', dodebias=False)
+            self.cd0bk[val] = decorr.Calc(fnd0, bintype='bk', dodebias=False)
+
+            if val=='LR72':
+                self.chmds1[val] = decorr.Calc(fnhmds1, bintype='planck', dodebias=False)
+                self.chmds2[val] = decorr.Calc(fnhmds2, bintype='planck', dodebias=False)
+                self.chmds1bk[val] = decorr.Calc(fnhmds1, bintype='bk', dodebias=False)
+                self.chmds2bk[val] = decorr.Calc(fnhmds2, bintype='bk', dodebias=False)
+
 
 
 class paper_plots(object):
@@ -63,22 +119,23 @@ class paper_plots(object):
     def plotall(self):
         """Make all plots"""
 
-        self.plotspec('LR63')
+        self.plotspec()
         self.plotnh()
+        self.plotnhzerocross()
         self.plotrawspec()
         self.plotnoispec()
-        self.PTEtable()
-        self.Rlimittable()
-        self.MCPTE()
+        self.Rtable()
+        self.plotcorrmatrix()
         self.plotRfine()
-        self.plotfulldiff()
 
 
     def plotspec(self, LR='LR63'):
 
         cqu = self.c.cqu[LR]
         cmc = self.c.cmc[LR]
-        cmclin = self.c.cmclin[LR]
+
+        cquds = self.c.cquds[LR]
+        cmcds = self.c.cmcds[LR]
 
         # Get model
         mod = decorr.Model(fsky=cqu.spec.fsky)
@@ -93,44 +150,52 @@ class paper_plots(object):
 
             subplot(2,1,k)
 
-            plot(cqu.bc-4, cmc.Smean[k], '.b', label='mean of noiseless sims')
-
             if k==1:
                 y = mod.RE
                 ybin = modbin.RE
-                x = np.loadtxt('PlanckL_EE.csv',delimiter=',')
-            else:
+            if k==2:
                 y = mod.RB
                 ybin = modbin.RB
-                x = np.loadtxt('PlanckL_BB.csv',delimiter=',')
+                x = np.loadtxt('PIPL_pdf2draw.csv',delimiter=',')
 
-            # Plot binned model
-            plot(cqu.bc+6, ybin, '+m', label='binned model',zorder=100,mew=2)
+            # Plot bins
+            xerr = (cmc.be[1:] - cmc.be[0:-1])/2
+            for q in range(cmc.nbin):
+                plot([cmc.be[q],cmc.be[q+1]],[ybin[q],ybin[q]],color='gray')
 
             # Plot model
             plot(mod.l, y, 'k--', label='model')
 
-            ## Plot Planck data
-            #if LR == 'LR63':
-             #   plot(cqu.bc, x[:,1], 'bs', label='Planck L',)
+            # Plot binned model
+            plot(cqu.bc, ybin,'.', color='gray', label='expectation', ms=4)
+
 
             # Plot real data
-            xerr = (cmc.be[1:] - cmc.be[0:-1])/2
-            errorbar(cqu.bc-4, cqu.R[k], yerr=cqu.err[k], xerr=xerr, fmt='o',
-                     label='data', linewidth=1, color=[0.8,0.2,0.2], ms=2.0, capthick=1, capsize=2) 
-            errorbar(cmc.bc, cmc.R[k], yerr=cmc.err[k], xerr=xerr, fmt='o',
-                     label='data after debias', linewidth=2, color='k', ms=4.0, capthick=1, capsize=3) 
+            plot(cqu.bc-16, cqu.R[k], '.r', label='HM (no debias)')
+            errorbar(cmc.bc-8, cmc.R[k], yerr=cmc.err[k], fmt='D',
+                     label='HM', linewidth=1, color='r', ms=4.0, capthick=1, capsize=3) 
+
+            plot(cquds.bc+8, cquds.R[k], '.b', label='DS (no debias)')
+            errorbar(cmcds.bc+16, cmcds.R[k], yerr=cmcds.err[k], fmt='s',
+                     label='DS', linewidth=1, color='b', ms=4.0, capthick=1, capsize=3) 
 
 
             plot([cqu.be[0],cqu.be[-1]],[1,1],':k')
 
+            ## Plot Planck data
+            if k==2:
+                LRR = np.array(['LR16','LR24','LR33','LR42','LR53','LR63N','LR63','LR63S','LR72'])
+                indd = np.where(LRR==LR)[0][0]
+                h = plot(cqu.bc-16, x[indd,:], 'xr', label='HM (PIPL)',)
+                legend([h[0]],['HM (PIPL)'])
+
             xlim(cqu.be[0]-3, cqu.be[-1]+3)
             if k==1:
                 ylim(0.6,1)
-                yticks(np.arange(0.7,1.01,0.1))
+                yticks(np.arange(0.6,1.01,0.1))
             else:
-                ylim(0.7,1.15)
-                yticks(np.arange(0.7,1.15,0.1))
+                ylim(0.6,1.2)
+                yticks(np.arange(0.6,1.11,0.1))
             
             if k==1:
                 legend(loc='upper right')
@@ -149,17 +214,313 @@ class paper_plots(object):
                 setp(ax.get_xticklabels(), visible=False)
 
         subplots_adjust(hspace=0, wspace=0)
-        savefig('figures/{0}spec.pdf'.format(LR))
+        savefig('figures/{0}spec.pdf'.format(LR), bbox_inches='tight')
 
         
 
-    def plotnh(self, bin=0, type='pipl'):
+    def plotnh(self):
+
+        f = open('specsyst.pickle','rb')
+        hmds = cP.load(f)
+        f.close()
+
+        bins = [0,1,2,3,4,0,1]
+        yll = [ [], [.5,1.5], [.5,1.5], [0,3.0], [0,3.0], [.7,1.5],[0,3.0]]
+        types = ['bk', 'bk','bk','bk','bk','pipl','pipl']
+        pos = [0,1,2,3,4,5,6]
+        npan = len(bins)
+
+        Rsystmean = []
+
+        #################
+        close(1)
+        figure(1, figsize=(10,8))
+        clf()
+
+
+        for kk in range(npan):
+
+            handles = []
+            labels = []
+
+
+            for jj in range(2):
+
+                # Bar width
+                wd = 0.1
+
+                if jj==0:
+                    # HM
+                    dw = -wd/2
+                    ds = ''
+                    c = 'r'
+                    sym = 'D'
+                    dh = 0.08
+                if jj==1:
+                    # DS
+                    dw = +wd/2
+                    ds = 'ds'
+                    c = 'b'
+                    sym = 's'
+                    dh = 0
+
+                bin = bins[kk]
+                type = types[kk]
+
+                # Massage into proper form
+                LRin = self.c.cmc.keys()
+                nhin = {'LR16':1.32, 'LR24':1.65, 'LR33':2.12, 'LR42':2.69, 'LR53':3.45, 
+                      'LR63':4.41, 'LR63N':4.14, 'LR63S':4.70, 'LR72':6.02}
+
+
+                # Sort LR by increasing nh
+                nhh = nhin.values()
+                ind = np.argsort(nhh)
+                LRR = nhin.keys()
+                LR = []
+                nh = []
+                for k,val in enumerate(ind):
+                    if LRR[val] in LRin:
+                        LR.append(LRR[val])
+                        nh.append(nhin[LRR[val]])
+                nh = np.array(nh)
+
+                # Get data
+                Rqu = []
+                Rmc = []
+                SN = []
+                err = []
+                Rsystlo = []
+                Rsysthi = []
+
+                mod = decorr.Model()
+
+
+
+                for k,val in enumerate(LR):
+
+                    if type == 'pipl':
+                        Rqu.append(getattr(self.c,'cqu'+ds)[val].R[2,bin])
+                        Rmc.append(getattr(self.c,'cmc'+ds)[val].R[2,bin])
+                        SN.append(getattr(self.c,'cqu'+ds)[val].SN[:,2,bin])
+                        err.append(getattr(self.c,'cqu'+ds)[val].err[2,bin])
+                        be = getattr(self.c,'cmc'+ds)[val].be[bin:(bin+2)].astype(int)
+
+                    if type == 'bk':
+                        Rqu.append(getattr(self.c,'cqubk'+ds)[val].R[2,bin])
+                        Rmc.append(getattr(self.c,'cmcbk'+ds)[val].R[2,bin])
+                        SN.append(getattr(self.c,'cqubk'+ds)[val].SN[:,2,bin])
+                        err.append(getattr(self.c,'cqubk'+ds)[val].err[2,bin])
+                        be = getattr(self.c,'cmcbk'+ds)[val].be[bin:(bin+2)].astype(int)                    
+
+                    if jj==0:
+
+                        dl = be[1]-be[0]
+                        if dl == 35:
+                            dlhi = 3
+                            dllo = 18
+                        else:
+                            dlhi = 3
+                            dllo = dl/2
+
+               
+                        syst = np.zeros((3,3,721))
+                        drr = np.sqrt(np.nanmean((hmds[0][kk][dlhi]['r'][:,2,:] - hmds[1][kk][dlhi]['r'][:,2,:])**2, 1))
+                        dss = np.nanmean(np.sqrt(np.nanmean((hmds[0][kk][dlhi]['sn'][:,:,2,:] - hmds[1][kk][dlhi]['sn'][:,:,2,:])**2, 2)),0)
+                        fac = 2*np.pi / (be.mean()*(be.mean()+1))
+                        syst[0,2,:] = 1e12*(drr - dss)[0] * fac/2
+                        syst[1,2,:] = 1e12*(drr - dss)[1] * fac/2
+                        syst[2,2,:] = 1e12*(drr - dss)[2] * fac/2
+                        syst[np.where(syst<0)] = 0
+                        RB, dum = mod.getR(fsky=decorr.LR2fsky(val), spec=2, be=be, syst=syst)
+                        Rsysthi.append(RB)
+
+                        syst = np.zeros((3,3,721))
+                        drr = np.sqrt(np.nanmean((hmds[0][kk][dllo]['r'][:,2,:] - hmds[1][kk][dllo]['r'][:,2,:])**2, 1))
+                        dss = np.nanmean(np.sqrt(np.nanmean((hmds[0][kk][dllo]['sn'][:,:,2,:] - hmds[1][kk][dllo]['sn'][:,:,2,:])**2, 2)),0)
+                        fac = 2*np.pi / (be.mean()*(be.mean()+1))
+                        syst[0,2,:] = 1e12*(drr - dss)[0] * fac/2
+                        syst[1,2,:] = 1e12*(drr - dss)[1] * fac/2
+                        syst[2,2,:] = 1e12*(drr - dss)[2] * fac/2
+                        syst[np.where(syst<0)] = 0
+                        RB, dum = mod.getR(fsky=decorr.LR2fsky(val), spec=2, be=be, syst=syst)
+                        Rsystlo.append(RB)
+
+
+                Rqu = np.array(Rqu)
+                Rmc = np.array(Rmc)
+                SN = np.array(SN).T
+                err = np.array(err)
+                Rsystlo = np.array(Rsystlo)
+                Rsysthi = np.array(Rsysthi)
+
+
+                if jj==0:
+                    Rsystmean.append( (Rsysthi + Rsystlo)/2.)
+                    
+                    
+                if pos[kk]==0:
+                    continue
+
+                binlab = '{:d}-{:d}'.format(*be)
+
+
+                med = []
+                up68 = []
+                down68 = []
+                up95 = []
+                down95 = []
+
+                for k,val in enumerate(LR):
+
+                    x = SN[:,k]
+
+                    # Confidence intervals
+                    xmed = np.nanmedian(x)
+
+                    med.append(xmed)
+                    ind = np.isfinite(x)
+                    up68.append(np.percentile(x[ind], 50 + 68./2))
+                    up95.append(np.percentile(x[ind], 50 + 95./2))
+                    down68.append(np.percentile(x[ind], 50 - 68./2))
+                    down95.append(np.percentile(x[ind], 50 - 95./2))
+
+
+
+                err = (np.array(up68) - np.array(down68))/2
+                chiR =   np.nansum((Rmc  -1)/err)
+                chi2R   = np.nansum(((Rmc  -1)/err)**2)
+                ind = np.isfinite(Rmc)
+                chiSN   = np.sum((SN[:,ind]  -1)/err[ind], axis=1)
+                chi2SN   = np.sum(((SN[:,ind]  -1)/err[ind])**2, axis=1)
+                nrlz   = np.where(np.isfinite(chi2SN))[0].size*1.0
+                PTEchi2   = np.size(np.where(chi2SN   > chi2R)[0]) / nrlz
+                PTEchi   = np.size(np.where(chiSN   < chiR)[0]) / nrlz
+
+                # Begin plotting
+                subplot(np.ceil(npan/2.)-1,2,pos[kk])
+
+                for k,val in enumerate(med):
+                    left = nh[k] - wd/2
+                    bottom68 = down68[k]
+                    bottom95 = down95[k]
+                    height68 = up68[k] - down68[k]
+                    height95 = up95[k] - down95[k]
+
+                    lab68 = None
+                    lab95 = None
+                    labmed = None
+                    labmed = None
+
+                    if k==0:
+                        labmed= 'median of sims'
+                        lab68 = '68% C.L.'
+                        lab95 = '95% C.L.'
+
+                    if k==0:
+                        labmed = 'median of sims'
+
+                    bar(left+dw, height95, width=wd, bottom=bottom95, color='0.8',
+                        edgecolor='0.4', label=lab95)
+                    bar(left+dw, height68, width=wd, bottom=bottom68, color='0.5',
+                        edgecolor='0.4', label=lab68)
+                    plot([left+dw,left+wd+dw],[med[k], med[k]], color='0.3', linewidth=2, label=labmed)
+
+                ax = gca()
+
+                # Plot a few realizations
+                nplots=20
+                colormap = cm.nipy_spectral 
+                ax.set_color_cycle([colormap(i) for i in np.linspace(0, 1, nplots)])
+                if jj==0:
+                    h1 = plot(nh+dw, SN[0:nplots].T, alpha=0.3, color=[1,.3,.3])
+
+                # Plot systematics
+                if jj==0:
+                    #hsys = plot(nh, Rsysthi, '-.k', label='systematics')
+                    #hsys = plot(nh, Rsystlo, '-.k')
+                    #hsys = plot(nh, 2-Rsysthi, '-.k', label='systematics')
+                    #hsys = plot(nh, 2-Rsystlo, '-.k')
+                    hsys = fill_between(nh, Rsysthi[:,0],    Rsystlo[:,0],    color='c',alpha=0.3)
+
+                # Plot real
+                hmc = plot(nh+dw, Rmc, sym+c, markersize=4.0, markeredgewidth=1.0)
+                hqu = plot(nh+dw, Rqu, '.'+c)
+                plot([0,7],[1,1],'k:')
+
+                if pos[kk] in [5,6]:
+                    xlabel(r'$N_H/10^{20} [cm^{-2}]$')
+                else:
+                    setp(gca().get_xticklabels(), visible=False)
+
+                ylim(*yll[kk])
+                if (pos[kk] in [3,4]) & (jj==1):
+                    gca().set_yticks(gca().get_yticks()[1:-1])
+                if (pos[kk] in [5,6]) & (jj==1):
+                    gca().set_yticks(gca().get_yticks()[0:-1])
+                if (pos[kk] in [5]) & (jj==1):
+                    gca().set_yticks(gca().get_yticks()[0::2])
+
+                
+
+                ylabel(r'$\mathcal{R}_{' + binlab + r'}^{BB}$')
+                xlim(1,7)
+
+                # Plot planck data
+                if (type=='pipl') & (ds==''):
+                    x = np.loadtxt('PIPL_pdf2draw.csv', delimiter=',')
+                    h3 = plot(nh+dw, x[:,bin], 'xr')
+                    legend(h3,['HM (PIPL)'])
+
+                # Add PTE text
+                text(0.95, 0.02+dh, 
+                     r'PTE $(\chi, \chi^2)$ = ({:0.3f}, {:0.3f})'.format(PTEchi,PTEchi2),
+                     horizontalalignment='right', verticalalignment='bottom', 
+                     transform=ax.transAxes, color=c)
+
+                if jj==0:
+
+                    handles.append(hqu[0])
+                    labels.append(u'HM (no debias)')
+
+                    handles.append(hmc[0])
+                    labels.append(u'HM')
+
+                    handles.append(h1[0])
+                    labels.append(u'HM sims')
+
+
+                else:
+
+                    handles.append(hqu[0])
+                    labels.append(u'DS (no debias)')
+
+                    handles.append(hmc[0])
+                    labels.append(u'DS')
+
+                    handles.append(hsys)
+                    labels.append(u'systematics')
+
+
+                    
+            if kk==1:
+                legend(handles, labels, loc='upper right',ncol=2)
+
+
+        tight_layout()
+        subplots_adjust(hspace=0)
+
+        figure(1)
+        savefig('figures/nh_curve.pdf', bbox_inches='tight')
+
+        self.Rsystmean = Rsystmean
+
+    def plotnhzerocross(self):
 
         # Massage into proper form
         LRin = self.c.cmc.keys()
         nhin = {'LR16':1.32, 'LR24':1.65, 'LR33':2.12, 'LR42':2.69, 'LR53':3.45, 
               'LR63':4.41, 'LR63N':4.14, 'LR63S':4.70, 'LR72':6.02}
-
 
         # Sort LR by increasing nh
         nhh = nhin.values()
@@ -173,167 +534,41 @@ class paper_plots(object):
                 nh.append(nhin[LRR[val]])
         nh = np.array(nh)
 
-        # Get data
-        Rqu = []
-        Rmc = []
-        SN = []
-        err = []
+        bin = 1
+        type = 'cmcbk'
 
-        for k,val in enumerate(LR):
-            if type == 'pipl':
-                Rqu.append(self.c.cqu[val].R[2,bin])
-                Rmc.append(getattr(self.c,'cmc')[val].R[2,bin])
-                SN.append(getattr(self.c,'cqu')[val].SN[:,2,bin])
-                err.append(getattr(self.c,'cqu')[val].err[2,bin])
-                be = getattr(self.c,'cmc')[val].be[bin:(bin+2)].astype(int)
-
-            if type == 'bk':
-                if (bin == 0) & (val in ['LR16','LR24','LR33']):
-                    Rmc.append(np.nan)
-                else:
-                    Rmc.append(getattr(self.c,'cmcbk')[val].R[2,bin])
-                SN.append(getattr(self.c,'cmcbk')[val].SN[:,2,bin])
-                err.append(getattr(self.c,'cmcbk')[val].err[2,bin])
-                be = getattr(self.c,'cmcbk')[val].be[bin:(bin+2)].astype(int)                    
-
-        if type=='pipl':
-            Rqu = np.array(Rqu)
-        Rmc = np.array(Rmc)
-        SN = np.array(SN).T
-        err = np.array(err)
-
-
-        binlab = '{:d}-{:d}'.format(*be)
-
-
-        med = []
-        up68 = []
-        down68 = []
-        up95 = []
-        down95 = []
-
-        for k,val in enumerate(LR):
-
-            x = SN[:,k]
-
-            # Confidence intervals
-            xmed = np.nanmedian(x)
-
-            med.append(xmed)
-            ind = np.isfinite(x)
-            up68.append(np.percentile(x[ind], 50 + 68./2))
-            up95.append(np.percentile(x[ind], 50 + 95./2))
-            down68.append(np.percentile(x[ind], 50 - 68./2))
-            down95.append(np.percentile(x[ind], 50 - 95./2))
-
-        col = ['y','b']
-
-        #################
         close(1)
-        figure(1, figsize=(7,5))
+        figure(1, figsize=(4,4))
         clf()
 
-        wd = 0.1
-        for k,val in enumerate(med):
-            left = nh[k] - wd/2
-            bottom68 = down68[k]
-            bottom95 = down95[k]
-            height68 = up68[k] - down68[k]
-            height95 = up95[k] - down95[k]
-
-            lab68 = None
-            lab95 = None
-            labmed = None
-            labmed = None
-
-            if k==0:
-                labmed= 'median of sims'
-                lab68 = '68% C.L.'
-                lab95 = '95% C.L.'
-
-            if k==0:
-                labmed = 'median of sims'
-
-            bar(left, height95, width=wd, bottom=bottom95, color='0.8',
-                edgecolor='0.4', label=lab95)
-            bar(left, height68, width=wd, bottom=bottom68, color='0.5',
-                edgecolor='0.4', label=lab68)
-            plot([left,left+wd],[med[k], med[k]], 'b', linewidth=2, label=labmed)
-
-        ax = gca()
-        handles, labels = ax.get_legend_handles_labels()
-
-        # Plot a few realizations
-        nplots=20
-        colormap = cm.nipy_spectral 
-        ax.set_color_cycle([colormap(i) for i in np.linspace(0, 1, nplots)])
-        h1 = plot(nh, SN[0:nplots].T, alpha=0.3, color='m')
-
-        # Plot real
-        hmc = plot(nh, Rmc, 'Dr', markersize=4.0, markeredgewidth=1.0)
-        if type == 'pipl':
-            hqu = plot(nh, Rqu, '.')
-        plot([0,7],[1,1],'k:')
-        xlabel(r'$N_H/10^{20} [cm^{-2}]$')
-        ylabel(r'$\mathcal{R}_{' + binlab + r'}^{BB}$')
-        xlim(1,7)
-        ylim(0.7,1.3)
-
-        # Plot planck data
-        #if (bin==0) & (type==''):
-        #    x = np.loadtxt('PlanckL_NH.csv', delimiter=',')
-        #    h3 = plot(nh, x[:,1], 's', markersize=2.0)
-
-        handles.append(h1[0])
-        labels.append(u'sims')        
-
-        #if (bin==0) & (type==''):
-        #    handles.append(h3[0])
-        #    labels.append(u'Planck L')
-
-        if type == 'pipl':
-            handles.append(hqu[0])
-            labels.append(u'data')
-
-        handles.append(hmc[0])
-        labels.append(u'data after debias')
-
-        legend(handles, labels, loc='upper right')
-        tight_layout()
+        # Get data
+        R = []
+        Rds = []
+        SN = []
+        SNds = []
 
 
-        figure(1)
-        savefig('figures/nh_bin{:s}_{:s}_curve.pdf'.format(binlab, type))
+        for k,val in enumerate(LR):
 
+            R.append(getattr(self.c,type)[val].R[2,bin])
+            Rds.append(getattr(self.c,type+'ds')[val].R[2,bin])
+            SN.append(getattr(self.c,type)[val].SN[:,2,bin])
+            SNds.append(getattr(self.c,type+'ds')[val].SN[:,2,bin])
+
+        R = np.array(R)
+        Rds = np.array(Rds)
+        SN = np.array(SN).T
+        SNds = np.array(SNds).T
+
+        s = getattr(self.c,type)[val].be[bin]
+        e = getattr(self.c,type)[val].be[bin+1]
 
         ############################
         ############################
         # Get some statistics
-        err = (np.array(up68) - np.array(down68))/2
 
-        chiRmc = np.sum((Rmc-1)/err)
-        chi2Rmc = np.sum(((Rmc-1)/err)**2)
-        if type=='pipl':
-            chiRqu = np.sum((Rqu-1)/err)
-            chi2Rqu = np.sum(((Rqu-1)/err)**2)
-
-        chiSN = np.sum((SN-1)/err, axis=1)
-        chi2SN = np.sum(((SN-1)/err)**2, axis=1)
-
-        nrlz = chi2SN.size*1.0
-        if type=='pipl':
-            PTEchi2qu = np.size(np.where(chi2SN < chi2Rqu)[0]) / nrlz
-        PTEchi2mc = np.size(np.where(chi2SN < chi2Rmc)[0]) / nrlz
-        print('chi2 PTE = {0}'.format(PTEchi2qu))
-        if type=='pipl':
-            print('chi2 PTE after debias = {0}'.format(PTEchi2mc))
-
-        if type=='pipl':
-            PTEchiqu = np.size(np.where(chiSN < chiRqu)[0]) / nrlz
-        PTEchimc = np.size(np.where(chiSN < chiRmc)[0]) / nrlz
-        print('chi PTE = {0}'.format(PTEchiqu))
-        if type=='pipl':
-            print('chi PTE after debias = {0}'.format(PTEchimc))
+        ####################
+        # Plot histogram of zero crossings
 
         # Calculate number of zero crossings
         def nzero(x):
@@ -345,97 +580,39 @@ class paper_plots(object):
             return ncross
 
         ncross = nzero(SN)
-        ncrossr = nzero(Rmc)
+        ncrossr = nzero(R)
 
-        ############################
-        ############################
+        ncrossds = nzero(SNds)
+        ncrossrds = nzero(Rds)
 
-        
-
-
-        close(2)
-        figure(2, figsize=(5,8))
-        clf()
-
-        subplot(3,1,1)
-
-        rng = (0, np.max(np.hstack((chi2SN, chi2SN))))
-        hist(chi2SN, range=rng, bins=25, label='sims', color=[0.8,0.8,0.8])
+        N, be, dum =   hist(ncross,   range=(-0.5,8.5), bins=9, color='r', alpha=0.8, normed=True)
+        Nds, be, dum = hist(ncrossds, range=(-0.5,8.5), bins=9, color='b', alpha=0.5, normed=True)
         yl=ylim()
-        if type=='pipl':
-            plot( [chi2Rqu,chi2Rqu], [0,yl[1]], color=[0.7,0.7,0.7], linewidth=3, label='observed')
-        plot( [chi2Rmc,chi2Rmc], [0,yl[1]], 'k', linewidth=3, label='observed (after debias)')
-        ylim(0.1,yl[1])
-        xlabel(r'$\chi^2$')
-        ax=gca()
-        ax.xaxis.major.locator.set_params(nbins=4) 
-
-        if type=='pipl':
-            text(0.95, 0.97, 'PTE = {:0.2f}'.format(PTEchi2qu),
-                 horizontalalignment='right', verticalalignment='top',
-                 transform=ax.transAxes)
-        text(0.95, 0.9, 'PTE after debias = {:0.2f}'.format(PTEchi2mc),
-             horizontalalignment='right', verticalalignment='top', 
-             transform=ax.transAxes)
-
-        legend(loc=(0.45,0.47))
-
-
-        subplot(3,1,2)
-        rng = ( np.min(np.hstack((chiSN, chiSN))), np.max(np.hstack((chiSN, chiSN))) )
-        hist(chiSN, range=rng, bins=15, label='sims', color=[0.8,0.8,0.8])
-        yl=ylim()
-        if type == 'pipl':
-            plot( [chiRqu,chiRqu], [0,yl[1]], color=[0.7,0.7,0.7], linewidth=3)
-        plot( [chiRmc,chiRmc], [0,yl[1]], color=[0,0,0], linewidth=3)
-        ylim(0.1,yl[1])
-        xlabel(r'$\chi$')
-
-        tight_layout()
-
-        ax=gca()
-        ax.xaxis.major.locator.set_params(nbins=4)
-
-        if type=='pipl':
-            text(0.95, 0.97, 'PTE = {:0.2f}'.format(PTEchiqu),
-                 horizontalalignment='right', verticalalignment='top',
-                 transform=ax.transAxes)
-
-        text(0.95, 0.9, 'PTE after debias = {:0.2f}'.format(PTEchimc),
-             horizontalalignment='right', verticalalignment='top', 
-             transform=ax.transAxes)
-
-
-        ####################
-        # Plot histogram of zero crossings
-        subplot(3,1,3)
-
-        N, be, dum = hist(ncross, range=(-0.5,8.5), bins=9, color=[0.8,0.8,0.8])
-        yl=ylim()
-        plot( [ncrossr,ncrossr], [0,yl[1]], 'k', linewidth=3)
+        plot( [ncrossr,ncrossr],     [0,yl[1]], 'r', linewidth=3, label='HM')
+        plot( [ncrossrds+0.02,ncrossrds+0.02], [0,yl[1]], 'b', linewidth=3, label='DS')
         xlim(-0.5,8.5)
-        xlabel(r'$\mathcal{R^{\mathrm{BB}}}$, # of zero crossings') 
 
         # Binomial distribution
         N = np.arange(9)
         bn = binom(8, 0.5)
-        Nexp = bn.pmf(N)*nrlz
+        Nexp = bn.pmf(N)
         for k,val in enumerate(Nexp):
             if k==0:
-                lab = 'uncorrelated\n expectation'
+                lab = 'uncorr.\n exp.'
             else:
                 lab = None
             plot([be[k],be[k+1]], [val,val], ':', color=[0,0,0], linewidth=1, label=lab)
         legend()
-        yl = ylim()
-        ylim(0.2,yl[1])
+        ylim(0,yl[1])
+
+        xlabel(r'$(\mathcal{R}^{BB}_{'+'{:d}-{:d}'.format(s,e) + r'} - 1)$ zero crossings')
 
         ##################
         # Save figs
 
         tight_layout()
-        figure(2)
-        savefig('figures/nh_bin{:s}_dist.pdf'.format(binlab))
+        figure(1)
+        savefig('figures/nh_zerocross.pdf', bbox_inches='tight')
 
 
     def PTEtable(self):
@@ -583,30 +760,31 @@ class paper_plots(object):
                      transform=ax.transAxes)
                      
 
+        tight_layout()
         subplots_adjust(hspace=0, wspace=0)
         
         ax = fig.add_axes( [0., 0., 1, 1] )
         ax.set_axis_off()
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1)
-        ax.text(.05, 0.5, r'$\ell(\ell+1)\mathcal{C}_{\ell}^{\mathrm{BB}}/2\pi \ [\mu\mathrm{K}^2]$', 
+        ax.text(.00, 0.5, r'$\ell(\ell+1)\mathcal{C}_{\ell}^{\mathrm{BB}}/2\pi \ [\mu\mathrm{K}^2]$', 
                  rotation='vertical', horizontalalignment='center', verticalalignment='center')
-        ax.text(.5, 0.05, r'Multipole $\ell$',
+        ax.text(.5, 0.0, r'Multipole $\ell$',
                  horizontalalignment='center', verticalalignment='center')
 
 
-        savefig('figures/rawspec.pdf')
+        savefig('figures/rawspec.pdf', bbox_inches='tight', pad_inches=0)
 
 
 
     def plotnoispec(self, LR='LR63'):
 
-        nrlz =  self.c.cmclin[LR].nrlz
-        l = self.c.cmclin[LR].bc
+        nrlz =  self.c.cmcnoi[LR].nrlz
+        l = self.c.cmcnoi[LR].bc
         fac = 1
 
-        nmc = fac * self.c.cmclin[LR].n.mean(0)*1e12
-        nmcerr = fac * self.c.cmclin[LR].n.std(0) / np.sqrt(nrlz) * 1e12
+        nmc = fac * self.c.cmcnoi[LR].n.mean(0)*1e12
+        nmcerr = fac * self.c.cmcnoi[LR].n.std(0) / np.sqrt(nrlz) * 1e12
 
         close(1)
         f = figure(1, figsize=(5,9))
@@ -633,10 +811,10 @@ class paper_plots(object):
             fill_between(l, ymc-dymc, ymc+dymc, color=[0.6,0.6,0.6], alpha=0.5)
             plot(l, ymc, 'k')
 
-            semilogx([50,700],[0,0],'k:')
+            semilogx([20,700],[0,0],'k:')
 
 
-            xlim(50,700)
+            xlim(20,700)
             ax = gca()
             ax.set_xticks(xt)
             ax.set_xticklabels(xt)
@@ -661,70 +839,31 @@ class paper_plots(object):
                  transform=ax.transAxes)
 
 
+        tight_layout()
         subplots_adjust(hspace=0, wspace=0)
 
         ax = f.add_axes( [0., 0., 1, 1] )
         ax.set_axis_off()
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1)
-        ax.text(.04, 0.5, r'$\ell(\ell+1)\mathcal{C}_{\ell,\mathrm{Noise}}^{BB}/2\pi \ [\mu \mathrm{K}^2]$',
+        ax.text(.01, 0.5, r'$\ell(\ell+1)\mathcal{C}_{\ell,\mathrm{FFP8}}^{BB}/2\pi \ [\mu \mathrm{K}^2]$',
                  rotation='vertical', horizontalalignment='center', verticalalignment='center')
-        ax.text(.5, 0.05, r'Multipole $\ell$',
+        ax.text(.5, 0.0, r'Multipole $\ell$',
                  horizontalalignment='center', verticalalignment='center')
 
  
-        savefig('figures/noispec.pdf'.format(c))
+        savefig('figures/noispec.pdf'.format(c), bbox_inches='tight')
 
 
-    def MCPTE(self):
+    def plotcorrmatrix(self):
        """Compute PTE table on a realization by realization basis"""
-       c = dc(self.c.cmc)
+       cmc = dc(self.c.cmc)
+       cbk = dc(self.c.cqubk)
 
        LR = decorr.getLR()
 
        nLR = len(LR)
-       nrlz = c[LR[0]].nrlz
-
-       # Get real PTE table
-       PTER =np.zeros(nLR*5)
-       for j,val in enumerate(LR):
-
-           PTER[j+0] = c[val].PTEall[2]
-           PTER[j+9] = c[val].PTE[2,0]
-           PTER[j+18] = c[val].PTE[2,1]
-           PTER[j+27] = c[val].PTE[2,2]
-           PTER[j+36] = c[val].PTE[2,3]
-       
-       # Get simulated PTE tables
-       PTEtab = np.zeros((nLR*5, nrlz))
-       for k in range(nrlz):
-           for j,val in enumerate(LR):
-
-               c[val].R = c[val].SN[k] # Replace real with SN realization
-               c[val].getPTE()
-
-               PTEtab[j+0 , k] = c[val].PTEall[2]
-               PTEtab[j+9 , k] = c[val].PTE[2,0]
-               PTEtab[j+18 , k] = c[val].PTE[2,1]
-               PTEtab[j+27 , k] = c[val].PTE[2,2]
-               PTEtab[j+36 , k] = c[val].PTE[2,3]
-               
-
-       PTEthresh = 0.05
-       nsim = (PTEtab<=PTEthresh).astype(float).sum(0)
-       nr = len(np.where(PTER<=PTEthresh)[0])
-
-       nsimthresh = len(np.where(nsim>=nr)[0])
-
-       # Get expectation value
-       bn = binom(nLR*5, PTEthresh)
-       nexp = (bn.pmf(np.arange(nr,100))).sum() * nrlz
-       
-
-       print('We observe {:d} PTEs <= {:0.1f}%.'.format(nr, PTEthresh*100))
-       print('From a random dist. of uncorrelated PTEs, this occurence has a probability of {:0.1f}%.'.format(nexp/nrlz*100))
-       print('From sims, this occurence has a probability of {:0.1f}%.'.format(nsimthresh*100./nrlz))
-
+       nrlz = cmc[LR[0]].nrlz
 
 
 
@@ -735,10 +874,9 @@ class paper_plots(object):
        # Correlation matrix of SN R values
        Rtab = np.zeros((nLR*4, nrlz))
        for j,val in enumerate(LR):
-           Rtab[j+np.array([0,9,18,27]), :] = c[val].SN[:,2,:].T
+           Rtab[j+np.array([0,9,18,27]), :] = np.hstack( (cbk[val].SN[:,2,1:4],cmc[val].SN[:,2,[0]]) ).T
 
        # Choose which quantity to get correlation matrix of
-       #dotab = PTEtab
        dotab = Rtab
 
        # Replace NaN's with uncorrelated uniformly distributed random numbers
@@ -771,84 +909,77 @@ class paper_plots(object):
        ax.set_xticks([])
 
        yticks(np.array([9,18,27,36])-5, 
-              ['$50-160$','$160-320$','$320-500$','$500-700$'], rotation=90, multialignment='center')
+              ['$55-90$','$90-125$','$125-160$','$50-160$'], rotation=90, multialignment='center')
        tick_params(pad=30, labelsize=10)
 
        xticks(np.array([9,18,27,36])-5, 
-              ['$50-160$','$160-320$','$320-500$','$500-700$'], rotation=0, multialignment='center')
+              ['$55-90$','$90-125$','$125-160$','$50-160$'], rotation=0, multialignment='center')
        tick_params(pad=30, labelsize=10)
 
 
-       savefig('figures/corr_matrix.pdf')
+       savefig('figures/corr_matrix.pdf', bbox_inches='tight')
 
 
-       return PTEtab
 
-
-    def plotRfine(self, val='LR72'):
+    def plotRfine(self, val='LR63'):
         """Plot R in fine bins"""
         
         ####
         close(1)
-        figure(1, figsize=(7,9) )
+        figure(1, figsize=(7,6) )
 
         bclin = self.c.cmclin[val].bc
-        bcpipl = self.c.cmc2f[val].bc
+        bcpipl = self.c.cmc[val].bc
         bcbk = self.c.cmcbk[val].bc
 
         belin = self.c.cmclin[val].be
-        bepipl = self.c.cmc2f[val].be
+        bepipl = self.c.cmc[val].be
         bebk = self.c.cmcbk[val].be
 
         Rlin = self.c.cmclin[val].R
-        Rpipl = self.c.cmc2f[val].R
+        Rpipl = self.c.cmc[val].R
         Rbk = self.c.cmcbk[val].R
 
-        errlin = self.c.cmclin[val].err
-        errpipl = self.c.cmc2f[val].err
-        errbk = self.c.cmcbk[val].err
+        errlin = self.c.cmclin[val].stderr
+        errpipl = self.c.cmc[val].stderr
+        errbk = self.c.cmcbk[val].stderr
+
+        Rlinds = self.c.cmclinds[val].R
+        Rpiplds = self.c.cmcds[val].R
+        Rbkds = self.c.cmcbkds[val].R
+
+        errlinds = self.c.cmclinds[val].stderr
+        errpiplds = self.c.cmcds[val].stderr
+        errbkds = self.c.cmcbkds[val].stderr
 
         
-        for k in range(2):
-        #for k in range(1): # Don't plot inset
+        xerrlin = (belin[1:] - belin[0:-1])/2
+        xerrpipl = (bepipl[1:] - bepipl[0:-1])/2
+        xerrbk = (bebk[1:] - bebk[0:-1])/2
 
-            if k==1:
-                fig = gcf()
-                ax = gca()
-                pos = ax.get_position()
-                fig.add_axes([pos.x0+.08, pos.y0+.04, 0.25, 0.3])
+        k=2 # BB
 
-            xerrlin = (belin[1:] - belin[0:-1])/2
-            xerrpipl = (bepipl[1:] - bepipl[0:-1])/2
-            xerrbk = (bebk[1:] - bebk[0:-1])/2
+        errorbar(bclin, Rlin[k], errlin[k], fmt='D',c=[.6,.6,.6], label=r'$\Delta\ell = 10$ (HM)', ms=3,markeredgecolor='none')
+        errorbar(bcbk-1, Rbk[k], errbk[k], xerrbk, fmt='D', color='r', ms=5, label=r'$\Delta\ell = 35$ (HM)', lw=2, capsize=3,zorder=500)
 
-            if k==0:
-                ylim(0.6,1.3)
-                xlim(19,336)
-                #xlim(19,700)
+        errorbar(bclin, Rlinds[k], errlinds[k], fmt='s',c=[.3,.3,.3], label=r'$\Delta\ell = 10$ (DS)', ms=3, markeredgecolor='none')
+        errorbar(bcbk+1, Rbkds[k], errbkds[k], xerrbk, fmt='s', color='b', ms=5, label=r'$\Delta\ell = 35$ (DS)', lw=2, capsize=3,zorder=500)
 
-            else:
-                ylim(0.98,1.02)
-                xlim(19,125)
-                ax = gca()
-                ax.set_yticks([0.98,1,1.02])
+        mod = decorr.Model(fsky=self.c.cqu[val].spec.fsky)
 
-            errorbar(bclin, Rlin[2], errlin[2], xerrlin, fmt='.',c=[0.7,0.7,0.7], label=r'$\Delta\ell = 10$')
-            errorbar(bcbk, Rbk[2], errbk[2], xerrbk, fmt='ok', ms=4, label=r'$\Delta\ell = 35$', lw=2, capsize=4)
-            errorbar(bcpipl-1, Rpipl[2], errpipl[2], xerrpipl, fmt='s', c='r', ms=4, label='PIP-L binning')
+        xlim(19,320)
+        plot(self.c.cd0[val].bc,self.c.cd0[val].S.mean(0)[2],':', c='k', label='model (no decorr)')
+        plot(self.c.cd1[val].bc,self.c.cd1[val].S.mean(0)[2],'--', c='gray', label='model (PySM d1)')
+        plot(self.c.cd2[val].bc,self.c.cd2[val].S.mean(0)[2],'--k', label='model (PySM d2)')
+        ylim(0.7,1.3)
+        ylabel(r'$\mathcal{R}_{BB}$')
+        xlabel(r'Multipole $\ell$')
+        legend(loc='upper left')
 
-            plot([0,350],[1,1],'k:')
-
-            if k==0:
-                legend(loc='upper left')
-                xlabel(r'Multipole $\ell$')
-                ylabel(r'$\mathcal{R}_{BB}$')
-
-    
-        savefig('figures/Rfine_{:s}.pdf'.format(val))
+        savefig('figures/Rfine_{:s}.pdf'.format(val), bbox_inches='tight')
 
         #######
-        for mm in range(2):
+        for mm in [1]:
 
             close(mm+2)
             fig = figure(mm+2, figsize=(7,10))
@@ -857,7 +988,7 @@ class paper_plots(object):
                 yl = [ [-12,6], [-12,6], [-12,6], [-12,6], [-2,6], [-2,6], [-2,6], [-2,6], [-2,6] ]
                 xl = [20,700]
             else:
-                yl = [ [-2,2], [-2,2], [-2,2], [-2,2], [0.5,1.5], [0.5,1.5], [0.5,1.5], [0.5,1.5], [0.5,1.5]]
+                yl = [ [-3,4], [-3,4], [-.5,2], [-.5,2], [0,2], [0,2], [0,2], [0,2], [0,2]]
                 xl = [20,320]
 
             LR = decorr.getLR()
@@ -866,6 +997,8 @@ class paper_plots(object):
 
                 Rlin = self.c.cmclin[val].R
                 errlin = self.c.cmclin[val].err
+                Rlinds = self.c.cmclinds[val].R
+                errlinds = self.c.cmclinds[val].err
 
                 subplot(5,2,k+1)
 
@@ -874,7 +1007,8 @@ class paper_plots(object):
                     plot([val2,val2],[yl[k][0],yl[k][1]],'--', color='gray')
                 plot([0,700],[1,1],':k')
 
-                errorbar(bclin, Rlin[2], errlin[2], fmt='.k', label=val)
+                errorbar(bclin, Rlin[2], errlin[2], fmt='Dr', label='HM',ms=3,markeredgecolor='none')
+                errorbar(bclin+2, Rlinds[2], errlinds[2], fmt='sb', label='DS',ms=3,markeredgecolor='none')
                 xlim(*xl)
 
                 yll = np.array(yl[k])
@@ -895,295 +1029,235 @@ class paper_plots(object):
                      horizontalalignment='left', verticalalignment='top',
                      transform=ax.transAxes)
 
+                if k==0:
+                    legend()
 
+            tight_layout()
             subplots_adjust(hspace=0, wspace=0)
 
             ax = fig.add_axes( [0., 0., 1, 1] )
             ax.set_axis_off()
             ax.set_xlim(0, 1)
             ax.set_ylim(0, 1)
-            ax.text(.04, 0.5, r'$\mathcal{R_{BB}}$',
+            ax.text(.0, 0.5, r'$\mathcal{R_{BB}}$',
                      rotation='vertical', horizontalalignment='center', verticalalignment='center')
-            ax.text(.5, 0.05, r'Multipole $\ell$',
+            ax.text(.5, 0.0, r'Multipole $\ell$',
                      horizontalalignment='center', verticalalignment='center')
 
             figure(mm+2)
-            savefig('figures/Rfine_allLR_{:d}.pdf'.format(mm))
+            savefig('figures/Rfine_allLR_{:d}.pdf'.format(mm), bbox_inches='tight')
 
 
-
-
-
-
-
-
-    def Rlimittable(self):
-        """Plot R lower limits or detections"""
+    def Rtable(self):
+        """Plot R ML and PTE"""
 
         LR = decorr.getLR()
 
         # Reorder
         LR = np.array(LR)[ [0,1,2,3,4,5,7,6,8] ]
 
+        capML = r"""Noise debiased $\rl^{BB}$ in different multipole bins and
+        different LR regions measured with the HM and DS splits. The undebiased
+        $\ell=50-160$ bin is also listed for comparison to the noise debiased
+        values. The quoted statistical uncertainties are one half of the region
+        enclosing $95\%$ of the adjusted signal+noise simulations. The
+        systematic uncertainties are the mean of the optimistic and pessimistic systematics estimates
+        shown in Figure~\ref{fig:nh_curve}."""
 
-        f = open('figures/Rlimittable.tex','w')
+        capPTE = r"""PTE statistic defined as the fraction of signal+noise
+        simulations having $\rl^{BB}$ less than the observed value.
+         PTEs do not account for systematic uncertainty."""
+
+
+        f = open('figures/MLtable.tex','w')
         
         
+        f.write(r'\newpage'+'\n')
+        f.write(r'\begin{turnpage}'+'\n')
+
         f.write(r'\begin{table*}[tbp!] '+'\n')
         f.write(r'\centering '+'\n')
-        f.write(r'\caption{The caption} '+'\n')
-        f.write(r'\label{tab:Rlim} '+'\n')
+        f.write(r'\caption{'+capML+r'} '+'\n')
+        f.write(r'\label{tab:ML} '+'\n')
         f.write(r'\begin{tabular}{lcccccccccc} '+'\n')
-        f.write(r'\toprule '+'\n')
-        f.write(r'\toprule '+'\n')
+        f.write(r'\addlinespace[1ex] '+'\n')
+        f.write(r'\hline '+'\n')
+        f.write(r'\hline '+'\n')
+        f.write(r'\addlinespace[1ex] '+'\n')
         f.write(r'\rule{0pt}{2ex} '+'\n')
-        f.write(r' & $\ell$ range & \mc{LR16}& \mc{LR24}& \mc{LR33}& \mc{LR42}& \mc{LR53}& \mc{LR63N}& \mc{LR63}& \mc{LR63S}& \mc{LR72} \\ '+'\n')
+        f.write(r'  & \mc{LR16}& \mc{LR24}& \mc{LR33}& \mc{LR42}& \mc{LR53}& \mc{LR63N}& \mc{LR63}& \mc{LR63S}& \mc{LR72} \\ '+'\n')
         f.write(r'\addlinespace[1ex] '+'\n')
-        f.write(r'\toprule '+'\n')
-        f.write(r'\toprule '+'\n')
+        f.write(r'\hline '+'\n')
         f.write(r'\addlinespace[1ex] '+'\n')
-        
+        f.write(r'  $f_{\rm sky}^{\rm eff}$ [\%]\hfil& 16& 24& 33& 42& 53& 33& 63& 30& 72\\ '+'\n')
+        f.write(r'\addlinespace[1ex] '+'\n')
+        f.write(r'\hline '+'\n')
+        f.write(r'\hline '+'\n')
 
-        spec = 2 # BB
+        # EE/BB
+        spec = 2 
         speclab = 'BB'
 
-        be1 = (self.c.cmcbk[LR[0]].be).astype(int)
-        bins1 = ['{:d}--{:d}'.format(be1[k],be1[k+1]) for k in range(be1.size-1)]
+        binind = [0,0,0,1,2,3]
 
-        be2 = (self.c.cmc2f[LR[0]].be[2:]).astype(int)
-        bins2 = ['{:d}--{:d}'.format(be2[k],be2[k+1]) for k in range(be2.size-1)]
+        types = ['cqu','cmc','cmcbk','cmcbk','cmcbk','cmcbk']
+        systbin = [5, 5, 0, 1, 2, 3]
 
-        bins = np.hstack( (bins1,bins2) )
+        bins = []
+        for k in range(len(types)):
+            be1 = getattr(self.c, types[k])['LR72'].be[binind[k]]
+            be2 = getattr(self.c, types[k])['LR72'].be[binind[k]+1]
+            bins.append('{:d}--{:d}'.format(be1,be2) )
 
-        ##########
-        # PTE
-        f.write(r'\multicolumn{11}{c}{PTE} \\')
-        f.write(r'\addlinespace[1ex] '+'\n')
-        f.write(r'\toprule '+'\n')
-
-        for j, binval in enumerate(bins):
-            f.write(r' &{0} '.format(binval))
-
-            for k, val in enumerate(LR):
-                
-                if j<9:
-                    x = 100*self.c.cmcbk[val].PTE[2,j]
-                else:
-                    x = 100*self.c.cmc2f[val].PTE[2,j-7]
-
-                xx = r'& {:0.1f}'.format(x)
-
-                if ~np.isfinite(x):
-                    xx = r'&\ldots'
-                
-                if (j==0) & (val in ['LR16','LR24', 'LR33']):
-                    xx = r'&\ldots'
-
-                f.write(xx)
-
-            f.write(r'\\ '+'\n')
-            f.write(r'\addlinespace[1ex] '+'\n')
-
-        f.write(r'\addlinespace[1ex] '+'\n')
-        f.write(r'\toprule '+'\n')
-        f.write(r'\toprule '+'\n')
-        f.write(r'\addlinespace[1ex] '+'\n')
-
+        bins[0] = r'\begin{tabular}{@{}c@{}}'+bins[0]+r'\\ (no d.b.) \end{tabular}'
 
         ##########
         # M.L. R_BB
-        f.write(r'\multicolumn{11}{c}{Maximum Likelihood $(\rl^{BB})$ } \\')
         f.write(r'\addlinespace[1ex] '+'\n')
-        f.write(r'\toprule '+'\n')
+        f.write(r'\addlinespace[1ex] '+'\n')
+        f.write(r'$\ell$ range & \multicolumn{9}{c}{Maximum Likelihood $\rl^{'+speclab+r'} (ML\substack{ +stat./syst.\\ -stat./syst.})$ \bigg( \begin{tabular}{@{}c@{}} HM \\[.1cm] DS \end{tabular} \bigg)   } \\')
+        f.write(r'\addlinespace[1ex] '+'\n')
+        f.write(r'\addlinespace[1ex] '+'\n')
+        f.write(r'\hline '+'\n')
+        f.write(r'\addlinespace[1ex] '+'\n')
+        f.write(r'\addlinespace[1ex] '+'\n')
 
-        for j, binval in enumerate(bins):
-            f.write(r' &{0} '.format(binval))
+        for j, binval, t, sb in zip(binind, bins, types, systbin):
+
+            f.write(r' {0} '.format(binval))
+            dat = getattr(self.c,t)
+            datds = getattr(self.c,t+'ds')
 
             for k, val in enumerate(LR):
 
-                if j<9:
-                    R = self.c.cmcbk[val].R[2,j]
-                    up68 = self.c.cmcbk[val].up68[2,j] - R
-                    up95 = self.c.cmcbk[val].up95[2,j] - R
-                    down68 = R - self.c.cmcbk[val].down68[2,j]
-                    down95 = R - self.c.cmcbk[val].down95[2,j]
-                    be = self.c.cmcbk[val].be[j:(j+2)]
-                else:
-                    R = self.c.cmc2f[val].R[2,j-7]
-                    up68 = self.c.cmc2f[val].up68[2,j-7] - R
-                    up95 = self.c.cmc2f[val].up95[2,j-7] - R
-                    down68 = R - self.c.cmc2f[val].down68[2,j-7] 
-                    down95 = R - self.c.cmc2f[val].down95[2,j-7]
-                    be = self.c.cmc2f[val].be[(j-7):(j-7+2)]
+                R = dat[val].R[spec,j]
+                up68 = dat[val].up68[spec,j] - R
+                up95 = dat[val].up95[spec,j] - R
+                down68 = R - dat[val].down68[spec,j]
+                down95 = R - dat[val].down95[spec,j]
 
-                # Transform everything to dust only R
-                fsky = self.c.cmcbk[val].spec.fsky
-                mod = decorr.Model(fsky=fsky, be=be)
-                up68, dum = mod.getR(Robs=up68)
-                up95, dum = mod.getR(Robs=up95)
-                down68, dum = mod.getR(Robs=down68)
-                down95, dum = mod.getR(Robs=down95)
-                up68 = up68[0]; 
-                up95 = up95[0]; 
-                down68 = down68[0]; 
-                down95 = down95[0]; 
-                    
-                x = '${:0.3f}\substack{{ +{:0.2f}\\\\ -{:0.2f} }}$'.format(R,up95/2,down95/2)
+                Rds = datds[val].R[spec,j]
+                up68ds = datds[val].up68[spec,j] - Rds
+                up95ds = datds[val].up95[spec,j] - Rds
+                down68ds = Rds - datds[val].down68[spec,j]
+                down95ds = Rds - datds[val].down95[spec,j]
+
+                be = dat[val].be[j:(j+2)]
+
+                syst = 1-self.Rsystmean[sb][k][0]
+                if syst>0:
+                    systup = syst
+                    systdown = 0
+                else:
+                    systup = 0
+                    systdown = syst
+
+                x = '${:0.3f}\substack{{ +{:0.2f}/{:0.2f}\\\\ -{:0.2f}/{:0.2f} }}$'.format(R,up95/2, systup, down95/2, systdown)
+                y = '${:0.3f}\substack{{ +{:0.2f}/{:0.2f}\\\\ -{:0.2f}/{:0.2f} }}$'.format(Rds,up95ds/2,systup,down95ds/2,systdown)
 
                 if ((up95/2)<.1) & ((down95/2)<.1):
-                    err1 = ('{:.3f}'.format(up68/2)).replace('0.','.')
                     err2 = ('{:.3f}'.format(up95/2)).replace('0.','.')
-                    err3 = ('{:.3f}'.format(down68/2)).replace('0.','.')
                     err4 = ('{:.3f}'.format(down95/2)).replace('0.','.')
-                    x = '${:0.3f}\substack{{ +{:s} \\\\ -{:s} }}$'.format(R,err2,err4)
+                    systup = ('{:.3f}'.format(systup)).replace('0.','.')
+                    systdown = ('{:.3f}'.format(systdown)).replace('0.','.')
+                    x = '${:0.3f}\substack{{ +{:s}/{:s} \\\\ -{:s}/{:s} }}$'.format(R,err2,systup,err4,systdown)
+
+                if ((up95ds/2)<.1) & ((down95ds/2)<.1):
+                    err2 = ('{:.3f}'.format(up95ds/2)).replace('0.','.')
+                    err4 = ('{:.3f}'.format(down95ds/2)).replace('0.','.')
+                    if type(systup) is not str:
+                        systup = ('{:.3f}'.format(systup)).replace('0.','.')
+                        systdown = ('{:.3f}'.format(systdown)).replace('0.','.')
+                    y = '${:0.3f}\substack{{ +{:s}/{:s} \\\\ -{:s}/{:s} }}$'.format(Rds,err2,systup,err4,systdown)
+
+                if ~np.isfinite(Rds):
+                    y = r'\ldots'
 
 
-                if ~np.isfinite(R):
-                    x = r'\ldots'
-                if (j==0) & (val in ['LR16','LR24', 'LR33']):
-                    x= r'\ldots'
-                if ((R + up95) < 1) | ((R - down95)>1):
-                    x = r'\boldmath ' + x 
+                if (binval=='20--55') & (val in ['LR16','LR24', 'LR33', 'LR42','LR53']):
+                    f.write(r'& \ldots')
+                else:
+                    f.write(r'& \begin{tabular}{@{}c@{}}'+x+r' \\[.2cm]'+y+r'\end{tabular}')
 
-                f.write(r'& {:s}'.format(x))
-
-            f.write(r'\\ '+'\n')
+            f.write(r'\\[1cm] '+'\n')
             f.write(r'\addlinespace[1ex] '+'\n')
 
+            f.write(r'\addlinespace[1ex] '+'\n')
+
+
+        f.write(r'\hline '+'\n')
+        f.write(r'\hline '+'\n')
+        f.write(r'\end{tabular} '+'\n')
+        f.write(r'\end{table*} '+'\n')
+        f.write(r'\end{turnpage}'+'\n')
+        f.close()
+
+        ##########
+        # PTE
+
+
+        f = open('figures/PTEtable.tex','w')
+        
+        
+        f.write(r'\begin{table*}[] '+'\n')
+        f.write(r'\centering '+'\n')
+        f.write(r'\caption{'+capPTE+r'} '+'\n')
+        f.write(r'\label{tab:PTE} '+'\n')
+        f.write(r'\begin{tabular*}{0.75\textwidth}{@{\extracolsep{\fill}} lcccccccccc} '+'\n')
         f.write(r'\addlinespace[1ex] '+'\n')
-        f.write(r'\toprule '+'\n')
-        f.write(r'\toprule '+'\n')
+        f.write(r'\hline '+'\n')
+        f.write(r'\hline '+'\n')
+        f.write(r'\addlinespace[1ex] '+'\n')
+
+        f.write(r'\rule{0pt}{2ex} '+'\n')
+        f.write(r'  & \mc{LR16}& \mc{LR24}& \mc{LR33}& \mc{LR42}& \mc{LR53}& \mc{LR63N}& \mc{LR63}& \mc{LR63S}& \mc{LR72} \\ '+'\n')
+        f.write(r'\addlinespace[1ex] '+'\n')
+        f.write(r'\hline '+'\n')
+        f.write(r'\addlinespace[1ex] '+'\n')
+        f.write(r'  $f_{\rm sky}^{\rm eff}$ [\%]\hfil& 16& 24& 33& 42& 53& 33& 63& 30& 72\\ '+'\n')
+        f.write(r'\addlinespace[1ex] '+'\n')
+        f.write(r'\hline '+'\n')
+        f.write(r'\hline '+'\n')
+        f.write(r'\addlinespace[1ex] '+'\n')
+        f.write(r' & \multicolumn{9}{c}{PTE$_{'+speclab+r'}$ \Big( \begin{tabular}{@{}c@{}} HM \\[.05cm] DS \end{tabular} \Big)   } \\')
+        f.write(r'\addlinespace[1ex] '+'\n')
+        f.write(r'\hline '+'\n')
+        f.write(r'\addlinespace[1ex] '+'\n')
         f.write(r'\addlinespace[1ex] '+'\n')
 
 
-        ############
-        # 95% L.L
-        f.write(r'\multicolumn{11}{c}{95$\%$~(\textit{99.7}$\%$) Lower Limit $(\rl^{BB})$ } \\')
-        f.write(r'\addlinespace[1ex] '+'\n')
-        f.write(r'\toprule '+'\n')
+        for j, binval, t in zip(binind, bins, types):
 
-        for j, binval in enumerate(bins):
-            f.write(r' &{0} '.format(binval))
+            f.write(r' {0} '.format(binval))
+            dat = getattr(self.c,t)
+            datds = getattr(self.c,t+'ds')
 
             for k, val in enumerate(LR):
 
-                if j<9:
-                    R = self.c.cmcbk[val].R[2,j]                
-                    like = self.c.cmcbk[val].Rlike[:,2,j]
-                    Rtrial = self.c.cmcbk[val].Rtrial
-                    be = self.c.cmcbk[val].be[j:(j+2)]
+                x = dat[val].PTE[spec,j]
+                y = datds[val].PTE[spec,j]
+
+                xx = r'{:0.3f}'.format(x)
+                yy = r'{:0.3f}'.format(y)
+
+                if ~np.isfinite(y):
+                    yy = r'\ldots'
+
+                if (binval=='20--55') & (val in ['LR16','LR24', 'LR33', 'LR42','LR53']):
+                    f.write(r'& \ldots')
                 else:
-                    R = self.c.cmc2f[val].R[2,j-7]                
-                    like = self.c.cmc2f[val].Rlike[:,2,j-7]
-                    Rtrial = self.c.cmc2f[val].Rtrial
-                    be = self.c.cmc2f[val].be[(j-7):(j-7+2)]
+                    f.write(r'& \begin{tabular}{@{}c@{}}'+xx+r' \\'+yy+r'\end{tabular}')
 
-                LL95 = np.interp(0.05, like, Rtrial)
-                dobold = False
+            f.write(r'\\[.5cm] '+'\n')
+            f.write(r'\addlinespace[1ex] '+'\n')
 
 
-                if LL95>=1:
-                    LL95 = np.interp(1-0.997, like, Rtrial)
-                    dobold = True
-
-                # Transform lower limit to dust only R
-                fsky = self.c.cmcbk[val].spec.fsky
-                mod = decorr.Model(fsky=fsky, be=be)
-                LL95, dum = mod.getR(Robs=LL95)
-                LL95 = LL95[0]
-
-                if dobold:
-                    x = '($>$\\textit{{ {:0.3f} }})'.format(LL95)
-                else:
-                    x = '$>{:0.3f}$'.format(LL95)
-
-                if ~np.isfinite(R):
-                    x = r'\ldots'
-                if (j==0) & (val in ['LR16','LR24', 'LR33']):
-                    x= r'\ldots'
-
-                f.write(r'& {:s}'.format(x))
-
-
-            f.write(r'\\ '+'\n')
-            f.write(r'\addlinespace[0.5ex] '+'\n')
-
-        f.write(r'\toprule '+'\n')
-        f.write(r'\addlinespace[1ex] '+'\n')
-
-
-        f.write(r'\end{tabular} '+'\n')
+        f.write(r'\hline '+'\n')
+        f.write(r'\hline '+'\n')
+        f.write(r'\end{tabular*} '+'\n')
         f.write(r'\end{table*} '+'\n')
 
         f.close()
 
 
-    def plotfulldiff(self):
-        """Plot difference of mc full and mc non-full real and sim"""
 
-        LR = decorr.getLR()
-
-        cf = self.c.cmc2f
-        c = self.c.cmc2
-        bc = self.c.cmc2[LR[0]].bc
-
-        clf()
-        
-        yl = [ [-2,2], [-2,2], [-0.5,0.5], [-0.5,0.5], [-0.2,0.2], [-0.2,0.2], [-0.1,0.1], [-0.1,0.1], [-0.1,0.1] ]
-
-        close(1)
-        fig = figure(1, figsize=(6,8))
-
-        for k,val in enumerate(LR):
-
-            subplot(5,2,k+1)
-
-            # Difference 
-            diffr = cf[val].R - c[val].R
-            diffsn = cf[val].SN - c[val].SN
-            
-
-            # Percentiles
-            down99p7 = np.nanpercentile(diffsn, 50 - 99.7/2, 0)
-            down95 = np.nanpercentile(diffsn, 50 - 95./2, 0)
-            down68 = np.nanpercentile(diffsn, 50 - 68./2, 0)
-            up99p7 = np.nanpercentile(diffsn, 50 + 99.7/2, 0)
-            up95 = np.nanpercentile(diffsn, 50 + 95./2, 0)
-            up68 = np.nanpercentile(diffsn, 50 + 68./2, 0)
-
-            fill_between(bc, down99p7[2], up99p7[2], color=[0.8,0.8,0.8])
-            fill_between(bc, down95[2], up95[2], color=[0.5,0.5,0.5])
-            fill_between(bc, down68[2], up68[2], color=[0.3,0.3,0.3])
-
-            plot(bc, diffr[2],'k.')
-
-            xlim(50,700)
-            ylim(*yl[k])
-
-            ax = gca()
-            
-            rng = yl[k][1] - yl[k][0]
-            ax.set_yticks([-rng/4, 0, +rng/4])
-            
-            
-            if (k+1)<9:
-                setp(ax.get_xticklabels(), visible=False)
-            if np.mod(k,2) == 1:
-                setp(ax.get_yticklabels(), visible=False)
-
-            text(0.03, 0.95, val, color='k',
-                 horizontalalignment='left', verticalalignment='top',
-                 transform=ax.transAxes)
-                     
-        subplots_adjust(hspace=0, wspace=0)
-        
-        ax = fig.add_axes( [0., 0., 1, 1] )
-        ax.set_axis_off()
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.text(.02, 0.5, r'$\Delta \mathcal{R_{BB}}$',
-                 rotation='vertical', horizontalalignment='center', verticalalignment='center')
-        ax.text(.5, 0.05, r'Multipole $\ell$',
-                 horizontalalignment='center', verticalalignment='center')
-
-        savefig('figures/fulldiff.pdf')
