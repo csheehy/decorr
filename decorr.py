@@ -1,3 +1,9 @@
+########
+########
+# Code to produce results from this paper:
+# https://journals.aps.org/prd/abstract/10.1103/PhysRevD.97.043522
+# https://arxiv.org/abs/1709.09729
+
 # Decorrelation of multifrequency CMB + dust maps as a function of ell
 import numpy as np
 import os
