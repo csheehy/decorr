@@ -1,1 +1,3 @@
-Add "maps" symlink pointing to planck maps
+#decorr
+
+Code to generate the results published in https://arxiv.org/abs/1709.09729
